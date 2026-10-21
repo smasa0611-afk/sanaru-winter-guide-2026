@@ -33,6 +33,18 @@ eval(harness+`
  assert.ok(document.getElementById('pdf-save').href.startsWith('blob:'));
  assert.ok(document.getElementById('pdf-summary').textContent.includes('4ページ'));
  assert.equal(document.getElementById('pdf-status').dataset.error,'false');
+ run("state.fields.student='変更後の生徒';renderPaper()");
+ assert.equal(document.getElementById('pdf-preview').hidden,true);
+ assert.equal(document.getElementById('pdf-save').getAttribute('href'),null);
+ assert.ok(document.getElementById('pdf-status').textContent.includes('入力が変わりました'));
+ run('Object.assign(state,'+JSON.stringify(sample)+');renderProposal()');
+ document.getElementById('print').click();
+ run("state.fields.goal='作成中に変更した目標';renderPaper()");
+ assert.equal(document.getElementById('print').disabled,true);
+ for(let i=0;i<200&&document.getElementById('print').disabled;i++)await new Promise(r=>setTimeout(r,100));
+ assert.equal(document.getElementById('pdf-preview').hidden,true);
+ assert.ok(document.getElementById('pdf-status').textContent.includes('作成中に入力が変わりました'));
+ assert.ok(result.audit.map(x=>x.text).join('').includes(model.courses[0].description.split(String.fromCharCode(10)).join('')));
  fs.writeFileSync('output/pdf/layout-audit.json',JSON.stringify(result.audit,null,2));
  console.log('PASS: same app PDF engine, sample 4 pages, optional handouts, long text, five courses, fees, edited meaning, private-note exclusion, overflow bounds and unsupported glyph handling.');
 })().catch(e=>{console.error(e);process.exitCode=1});

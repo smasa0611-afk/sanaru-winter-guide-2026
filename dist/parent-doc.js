@@ -40,6 +40,7 @@ renderPaper=function(){winterParentRender();const paper=$('paper');paper.classLi
  for(const root of [paper,...paper.querySelectorAll('.meaning-page')]){const cover=document.createElement('header');cover.className='document-cover';const end=root===paper?root.querySelector('.letter'):root.querySelector('h1');const nodes=[];for(let n=root.firstElementChild;n;n=n.nextElementSibling){nodes.push(n);if(n===end)break;}root.prepend(cover);nodes.forEach(n=>cover.append(n));}
 };
 function parentDocumentHTML(){const scene=document.querySelectorAll('style');let artwork='';for(const el of scene){const match=el.textContent.match(/--winter-scene\s*:\s*(url\([^)]*\))/);if(match){artwork=match[1];break;}}
+ if(!artwork&&globalThis.WINTER_PDF_ASSETS?.art)artwork='url("data:image/jpeg;base64,'+globalThis.WINTER_PDF_ASSETS.art+'")';
  return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2026冬期講座 ご提案書</title><style>:root{--winter-scene:'+ (artwork||'url("assets/winter-landscape.png")')+'}'+PARENT_CSS+'</style></head><body class="parent-document">'+$('paper').innerHTML+'</body></html>';
 }
 const oldDownload=$('download'),newDownload=oldDownload.cloneNode(true);oldDownload.replaceWith(newDownload);

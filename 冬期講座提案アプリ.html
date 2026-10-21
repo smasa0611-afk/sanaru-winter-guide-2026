@@ -44,6 +44,7 @@ const methods=[
  ['読書の力','言葉の世界を、広げよう。','朗読を聴きながら読書し、ワークで語彙や表現に触れる「読むとくメソッド®」の学習です。','本に親しみたい／言葉を増やしたい','読書の習慣・語彙を育む提案に。短期間の国語得点向上を約束する講座ではありません。','https://www.sanaru-net.com/kobetsu/chikara/reading/'],
  ['英検®の力','英語を使う、次の目標へ。','受験級や習熟度に合わせ、読む・聞く・話す・書く力を育て、英検合格を目指します。','次の級に挑戦したい／話す・書く力を伸ばしたい','受験級・前回の結果・苦手な技能を確認。冬期の開講級や受験日程は校舎で確認します。','https://www.sanaru-net.com/kobetsu/chikara/eiken/']];
 const state={grade:'中1',case:'foundation',subject:'すべて',schoolType:'standard',route:'general',selected:[],fields:{},verified:false,extras:''};
+for(const p of PLANS)if(p.kind==='力シリーズ')p.variable=true;
 for(const g of grades){
  for(const [subject,composition] of [['英検®の力','英検4回'],['閃きの力','閃き4回'],['読書の力','読書4回']]){
   if(PLANS.some(p=>p.grade===g&&p.subject===subject))continue;
@@ -53,7 +54,7 @@ for(const g of grades){
  if(g.startsWith('小'))PLANS.push({id:`entrance-${g}`,grade:g,subject:'中学受験',kind:'オリジナル',composition:'オリジナルプラン',detail:'志望校・試験科目・答案・残り日程を確認して個別設計。回数や教材は確定資料に指定なし。',source:'力・作文!A8:B8'});
 }
 const planById=id=>PLANS.find(p=>p.id===id);
-function effective(p){let c=p.composition;if(state.schoolType==='self'&&p.grade==='中3'&&['英語','数学'].includes(p.subject))c=c.replace(/個別(?:指導)?/g,'自立学習');return c.replace(/８/g,'8').replace(/Ai/g,'AI').replace(/自立(?!学習)/g,'自立学習').replace(/(?<!AI)学トレ/g,'AI学トレ');}
+function effective(p,schoolType=state.schoolType){let c=p.composition;if(schoolType==='self'&&p.grade==='中3'&&['英語','数学'].includes(p.subject))c=c.replace(/個別(?:指導)?/g,'自立学習');return c.replace(/８/g,'8').replace(/Ai/g,'AI').replace(/自立(?!学習)/g,'自立学習').replace(/(?<!AI)学トレ/g,'AI学トレ');}
 function countOf(c){const clean=c.replace(/[０-９]/g,x=>String(x.charCodeAt(0)-65296)).replace(/（合計[^）]*）/g,'').replace(/\s/g,'');const pattern=/(?:個別指導|個別|AI学トレ|Ai学トレ|学トレ|映像授業|映像|自立学習|自立|閃き(?:の力)?|読書(?:の力)?|英検(?:®の力)?)[:：]?([1-9][0-9]*)(?:回|コマ)/g;const matches=[...clean.matchAll(pattern)];const rest=clean.replace(pattern,'').replace(/[＋+、]/g,'');return matches.length&&!rest?matches.reduce((n,m)=>n+Number(m[1]),0):null;}
 function copyFor(p){
  let desc='',goal='';const sub=p.subject;
@@ -74,16 +75,16 @@ function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clea
 function ask(message){return new Promise(resolve=>{const d=document.createElement('dialog');d.className='confirm-dialog';d.innerHTML=`<form method="dialog"><p>${esc(message)}</p><div class="actions"><button class="secondary" value="cancel">戻る</button><button class="primary" value="ok">変更する</button></div></form>`;document.body.append(d);d.addEventListener('close',()=>{const ok=d.returnValue==='ok';d.remove();resolve(ok)},{once:true});d.showModal()})}
 function view(v){document.querySelectorAll('.view').forEach(e=>e.hidden=e.id!==v);document.querySelectorAll('[data-view]').forEach(e=>e.classList.toggle('active',e.dataset.view===v));if(v==='proposal')renderProposal();window.scrollTo({top:0,behavior:'smooth'})}
 function renderFilters(){ $('grade').innerHTML=grades.map(g=>`<option ${g===state.grade?'selected':''}>${g}</option>`).join('');$('route').disabled=state.grade!=='中3';$('route').value=state.route;$('schoolType').value=state.schoolType;$('cases').innerHTML=cases.map(c=>`<button class="case ${state.case===c.id?'selected':''}" data-case="${c.id}" aria-pressed="${state.case===c.id}"><span class="symbol">${c.symbol}</span><b>${c.title}</b><small>${c.sub}</small></button>`).join('');const subjects=['すべて',...new Set(PLANS.filter(p=>p.grade===state.grade).map(p=>p.subject))];if(!subjects.includes(state.subject))state.subject='すべて';$('subjects').innerHTML=subjects.map(s=>`<button class="chip ${s===state.subject?'selected':''}" data-subject="${s}" aria-pressed="${s===state.subject}">${s}</button>`).join('');}
-function renderResults(){const c=cases.find(c=>c.id===state.case),query=$('search').value.trim().toLowerCase();let target=state.grade==='中3'?(state.route==='recommend'?'私立推薦':state.route==='advanced'?'難関高校':'補強'):c.kind;let plans=PLANS.filter(p=>p.grade===state.grade&&(state.subject==='すべて'||p.subject===state.subject));if(!query&&!state.showAll)plans=plans.filter(p=>p.kind===target||(state.subject!=='すべて'&&(p.kind==='力シリーズ'||p.kind==='作文'||p.kind==='オリジナル'))||(state.grade==='高3'&&p.kind==='オリジナル')||(state.case==='roots'&&(p.kind==='力シリーズ'||p.kind==='作文')));else plans=plans.filter(p=>(p.subject+p.kind+p.detail).toLowerCase().includes(query));$('result-title').textContent=`${state.grade}の冬に、おすすめの学び`;$('match-note').textContent=`${plans.length}件 · ${query?'検索結果：パターンをまたいで表示しています。':c.reason} ${state.grade==='中3'?'中3は選択した進路の確定プランを優先表示。':''}`;
- $('results').innerHTML=plans.length?plans.map(p=>{const copy=copyFor(p),comp=effective(p),selected=state.selected.some(x=>x.id===p.id),unavailable=state.schoolType==='self'&&comp.includes('個別');return `<article class="card"><div class="card-body"><p class="eyebrow">${p.grade} / ${p.subject} / ${p.kind}</p><h3>${copy.title}</h3><p class="desc">${copy.desc}</p><span class="badge">${esc(comp.replace(/\n/g,' '))}</span>${unavailable?'<p class="custom-help">このプランは個別指導を含みます。自立のみ校舎では代替プランを担当者に確認してください。</p>':''}<div class="reason"><b>こんな生徒への提案に</b>${p.kind==='オリジナル'?'志望校に合わせた個別設計が必要。':p.kind==='力シリーズ'?esc(methods.find(m=>m[0]===p.subject)?.[3]||''):p.kind==='作文'?'語彙や表現の土台を育てたい。':p.kind==='私立推薦'?'私立推薦入試へ、過去問や知識を整理したい。':p.kind==='難関高校'?'基本が身につき、難度の高い問題に挑戦したい。':c.reason}</div><p class="goal"><b>冬の到達目標例</b><br>${copy.goal}</p>${p.variable?`<label>受講回数<select data-count="${p.id}" aria-label="${p.subject}の受講回数">${[4,8,12,16,20].map(n=>`<option value="${n}">${n}回</option>`).join('')}</select></label>`:''}<details><summary>社員向けの確認・教材・出典</summary><p>学校の進度、本人の理解、既受講単元、日程を確認。料金は提案書で確認後に入力します。</p><div class="detailtext">${esc(p.detail)}</div><p>確定Excel：${esc(p.source)}</p>${p.subject==='理科'&&['中1','中2'].includes(p.grade)&&p.kind==='強化'?'<p>教材の「2025年度版」は原資料表記。使用する版を確認。</p>':''}</details></div><div class="card-bottom"><button class="${selected?'secondary':'primary'}" data-add="${p.id}" ${selected||unavailable?'disabled':''}>${selected?'✓ 提案に追加済み':'この学びを提案に追加 ＋'}</button></div></article>`}).join(''):'<div class="empty">この条件の定型プランは資料にありません。<br>教科・パターンを変えるか、校舎でオリジナルプランをご相談ください。</div>';}
-function addPlan(id){const p=planById(id),copy=copyFor(p);let comp=effective(p);const select=document.querySelector(`[data-count="${CSS.escape(id)}"]`);if(select)comp=comp.replace('4回',select.value+'回');state.selected.push({id,composition:comp,title:p.subject+' '+p.kind,description:copy.desc,goal:copy.goal,reason:cases.find(c=>c.id===state.case).reason,price:'',custom:p.kind==='オリジナル'});state.verified=false;updateCount();renderResults();toast('提案に追加しました。右上の「提案書」で確認できます。')}
+function renderResults(){const c=cases.find(c=>c.id===state.case),query=$('search').value.trim().toLowerCase();let target=state.case==='roots'?'力シリーズ':state.grade==='中3'?(state.route==='recommend'?'私立推薦':state.route==='advanced'?'難関高校':'補強'):c.kind;let plans=PLANS.filter(p=>p.grade===state.grade&&(state.subject==='すべて'||p.subject===state.subject));if(!query&&!state.showAll)plans=plans.filter(p=>p.kind===target||(state.subject!=='すべて'&&(p.kind==='力シリーズ'||p.kind==='作文'||p.kind==='オリジナル'))||(state.grade==='高3'&&p.kind==='オリジナル')||(state.case==='roots'&&(p.kind==='力シリーズ'||p.kind==='作文')));else plans=plans.filter(p=>(p.subject+p.kind+p.detail).toLowerCase().includes(query));$('result-title').textContent=`${state.grade}の冬に、おすすめの学び`;$('match-note').textContent=`${plans.length}件 · ${query?'検索結果：パターンをまたいで表示しています。':c.reason} ${state.grade==='中3'?'中3は選択した進路の確定プランを優先表示。':''}`;
+ $('results').innerHTML=plans.length?plans.map(p=>{const copy=copyFor(p),comp=effective(p),selected=state.selected.some(x=>x.id===p.id),unavailable=state.schoolType==='self'&&comp.includes('個別');return `<article class="card"><div class="card-body"><p class="eyebrow">${p.grade} / ${p.subject} / ${p.kind}</p><h3>${copy.title}</h3><p class="desc">${copy.desc}</p><span class="badge">${esc(comp.replace(/\n/g,' '))}</span>${unavailable?'<p class="custom-help">このプランは個別指導を含みます。自立のみ校舎では代替プランを担当者に確認してください。</p>':''}<div class="reason"><b>こんな生徒への提案に</b>${p.kind==='オリジナル'?'志望校に合わせた個別設計が必要。':p.kind==='力シリーズ'?esc(methods.find(m=>m[0]===p.subject)?.[3]||''):p.kind==='作文'?'語彙や表現の土台を育てたい。':p.kind==='私立推薦'?'私立推薦入試へ、過去問や知識を整理したい。':p.kind==='難関高校'?'基本が身につき、難度の高い問題に挑戦したい。':c.reason}</div><p class="goal"><b>冬の到達目標例</b><br>${copy.goal}</p>${p.variable?`<label>受講回数<select data-count="${p.id}" aria-label="${p.subject}の受講回数">${[4,8,12,16,20].map(n=>`<option value="${n}" ${n===countOf(comp)?'selected':''}>${n}回</option>`).join('')}</select></label>`:''}<details><summary>社員向けの確認・教材・出典</summary><p>学校の進度、本人の理解、既受講単元、日程を確認。料金は提案書で確認後に入力します。</p><div class="detailtext">${esc(p.detail)}</div><p>確定Excel：${esc(p.source)}</p>${p.subject==='理科'&&['中1','中2'].includes(p.grade)&&p.kind==='強化'?'<p>教材の「2025年度版」は原資料表記。使用する版を確認。</p>':''}</details></div><div class="card-bottom"><button class="${selected?'secondary':'primary'}" data-add="${p.id}" ${selected||unavailable?'disabled':''}>${selected?'✓ 提案に追加済み':'この学びを提案に追加 ＋'}</button></div></article>`}).join(''):'<div class="empty">この条件の定型プランは資料にありません。<br>教科・パターンを変えるか、校舎でオリジナルプランをご相談ください。</div>';}
+function addPlan(id){const p=planById(id),copy=copyFor(p);let comp=effective(p);const select=document.querySelector(`[data-count="${CSS.escape(id)}"]`);if(select)comp=comp.replace(/[0-9]+回/,select.value+'回');state.selected.push({id,composition:comp,title:p.subject+' '+p.kind,description:copy.desc,goal:copy.goal,reason:cases.find(c=>c.id===state.case).reason,price:'',custom:p.kind==='オリジナル'});state.verified=false;updateCount();renderResults();toast('提案に追加しました。右上の「提案書」で確認できます。')}
 function updateCount(){$('count').textContent=state.selected.length}
 const fieldIds=['student','school','teacher','goal','message','period','deadline','notes'];
 function renderProposal(){fieldIds.forEach(id=>$(id).value=state.fields[id]||'');$('extras').value=state.extras;$('verified').checked=state.verified;$('selected-edit').innerHTML=state.selected.map((x,i)=>`<div class="selected-item"><button class="textbtn remove" data-remove="${i}">削除</button><h3>${i+1}. ${esc(x.title)}</h3><label>受講構成${x.custom?'<input data-edit="composition" data-index="'+i+'" value="'+esc(x.composition)+'" placeholder="授業形式と回数を入力">':`<p class="muted">${esc(x.composition)}</p>`}</label><label>おすすめする理由<textarea rows="2" maxlength="500" data-edit="reason" data-index="${i}">${esc(x.reason)}</textarea></label><label>冬の到達目標<textarea rows="2" maxlength="500" data-edit="goal" data-index="${i}">${esc(x.goal)}</textarea></label><label>受講料（税込・円）<input type="number" min="0" step="1" data-edit="price" data-index="${i}" value="${esc(x.price)}" placeholder="校舎で確認して入力"></label></div>`).join('');renderPaper();}
 const money=n=>'¥'+Number(n).toLocaleString('ja-JP');
-function validMoney(v){return v!==''&&Number.isSafeInteger(Number(v))&&Number(v)>=0}
+function validMoney(v){return (typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&Number.isSafeInteger(Number(v))&&Number(v)>=0}
 function renderPaper(){const f=state.fields;let known=state.selected.length>0&&state.selected.every(x=>validMoney(x.price))&&validMoney(state.extras);const total=known?state.selected.reduce((s,x)=>s+Number(x.price),Number(state.extras)):null;const counts=state.selected.map(x=>countOf(x.composition)),allCount=counts.every(x=>x!==null)&&counts.length>0;const sum=counts.reduce((a,b)=>a+(b||0),0);$('paper').innerHTML=`<div class="paper-top"><b>さなる個別@will</b><span>2026 WINTER</span></div><p class="salutation">${esc(f.student||'お子さま')} ${f.student?'様':''}・保護者様へ</p><h1>この冬の「できた」を、<br>春の自信につなげよう。</h1><p class="letter">${esc(f.message||'一人ひとりの今と、目指す姿に合わせて。この冬に取り組んでほしい学びをご提案します。')}</p><div class="winter-goal"><b>この冬に目指すこと</b>${esc(f.goal||'一つひとつ確かめながら、自分の力でできることを増やしていきましょう。')}</div>${state.selected.length?state.selected.map((x,i)=>`<section class="paper-course"><h2>${String(i+1).padStart(2,'0')}　${esc(x.title)}</h2><p class="composition">${esc(state.grade)} / ${esc(x.composition.replace(/\n/g,' '))}</p><p>${esc(x.description)}</p><p><b>おすすめする理由</b><br>${esc(x.reason)}</p><p><b>冬の到達目標</b><br>${esc(x.goal)}</p><p class="amount">受講料（税込） ${validMoney(x.price)?money(x.price):'確認中'}</p></section>`).join(''):'<section class="empty">「ぴったりを探す」から<br>提案したい学びを選んでください。</section>'}<p class="muted">受講回数：${allCount?'合計 '+sum+'回（複数講座の合計）':'個別相談'}${sum>=40?'。日程に無理なく組めるか校舎とご相談ください。':''}</p><p class="muted">教材費・その他（税込）：${validMoney(state.extras)?money(state.extras):'確認中'}</p><div class="paper-total"><span>ご提案総額（税込）</span><span>${known&&state.verified?money(total):'確認中'}</span></div>${known&&!state.verified?`<p class="muted">入力済み金額の合計：${money(total)}（受講条件の確認前）</p>`:''}<div class="paper-meta">${f.period?'受講期間：'+esc(f.period)+'<br>':''}${f.deadline?'ご相談・申込期限：'+esc(f.deadline)+'<br>':''}${f.notes?esc(f.notes)+'<br>':''}<br>${esc(f.school||'校舎名 未入力')}${f.teacher?'　担当 '+esc(f.teacher):''}</div><p class="paper-end">開講日時・教材・受講条件は校舎とご相談のうえ決定します。到達目標は学習の目安です。<br>2026冬期講座 ご提案書 · ${new Date().toLocaleDateString('ja-JP',{timeZone:'Asia/Tokyo'})}</p>`;$('print').disabled=!state.selected.length;$('download').disabled=!state.selected.length;}
-function reset(){state.selected=[];state.fields={};state.verified=false;state.extras='';updateCount();renderProposal();renderResults()}
+function reset(){state.selected=[];state.fields={};state.verified=false;state.extras='';state.showAll=false;$('search').value='';if($('show-all'))$('show-all').checked=false;updateCount();renderProposal();renderResults()}
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
 $('cases').addEventListener('click',e=>{const b=e.target.closest('[data-case]');if(b){state.case=b.dataset.case;renderFilters();renderResults()}});
 $('subjects').addEventListener('click',e=>{const b=e.target.closest('[data-subject]');if(b){state.subject=b.dataset.subject;renderFilters();renderResults()}});
@@ -98,7 +99,7 @@ $('extras').addEventListener('input',()=>{state.extras=$('extras').value;state.v
 $('print').addEventListener('click',()=>window.print());
 $('download').addEventListener('click',()=>{const css=`body{max-width:760px;margin:40px auto;padding:25px;color:#304d46;font-family:Meiryo,sans-serif;line-height:1.9}.paper-top{display:flex;justify-content:space-between;border-bottom:2px solid #357269;padding-bottom:20px}h1{font-family:serif;line-height:1.6;font-size:30px}.letter,.winter-goal,.paper-course p,.paper-meta{white-space:pre-wrap}.winter-goal{background:#f0f5ed;padding:20px}.winter-goal b{display:block}.paper-course{border-bottom:1px solid #dce5dc;padding:20px 0;break-inside:avoid}.paper-course h2{font-size:20px}.composition,.muted,.paper-meta,.paper-end{font-size:12px}.amount{text-align:right;font-weight:bold}.paper-total{display:flex;justify-content:space-between;font-weight:bold;padding:20px 0}.paper-meta{border-top:1px solid #dce5dc;padding-top:20px}.meaning-page h2{font-family:serif;color:#317165}.meaning-block{padding:14px 0;border-bottom:1px solid #dce5dc}.meaning-block h3{font-size:15px;color:#907141}.meaning-block p{font-size:13px;white-space:pre-wrap}.meaning-home{background:#f0f4e8;padding:16px;font-size:13px}.meaning-kicker{font-size:12px}@page{size:A4;margin:15mm}@media print{body{margin:0;padding:0}}`;const blob=new Blob([`<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2026冬期講座 ご提案書</title><style>${css}</style><body>${$('paper').innerHTML}</body></html>`],{type:'text/html;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='2026冬期講座_ご提案書.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('保護者向け提案書を保存しました')});
 $('save').addEventListener('click',()=>{try{localStorage.setItem('sanaru-winter-2026-v1',JSON.stringify(state));toast('この端末のブラウザに保存しました')}catch{toast('保存できません。提案書の保存をご利用ください')}});
-$('restore').addEventListener('click',async()=>{try{const s=JSON.parse(localStorage.getItem('sanaru-winter-2026-v1'));if(!s){toast('保存した提案はありません');return}if(!grades.includes(s.grade)||!Array.isArray(s.selected)||!s.selected.every(x=>planById(x.id)))throw Error();if(state.selected.length&&!await ask('現在の提案を保存済みの内容で置き換えますか？'))return;Object.assign(state,s);updateCount();renderFilters();renderResults();renderProposal();toast('保存した提案を読み込みました')}catch{toast('保存データを読み込めませんでした')}});
+$('restore').addEventListener('click',async()=>{try{const s=JSON.parse(localStorage.getItem('sanaru-winter-2026-v1'));if(!s){toast('保存した提案はありません');return}const checked=validatedPlanState(s);if(state.selected.length&&!await ask('現在の提案を保存済みの内容で置き換えますか？'))return;applyPlanState(checked);toast('保存した提案を読み込みました')}catch{toast('保存データを読み込めませんでした')}});
 $('clear').addEventListener('click',async()=>{if(await ask('画面の提案内容をクリアしますか？保存済みの内容は残ります。'))reset()});$('deleteSaved').addEventListener('click',async()=>{if(await ask('このブラウザに保存した提案を削除しますか？')){try{localStorage.removeItem('sanaru-winter-2026-v1');toast('保存を削除しました')}catch{toast('保存にアクセスできませんでした')}}});
 $('methods').innerHTML=methods.map((m,i)=>`<article class="method"><p class="eyebrow">${String(i+1).padStart(2,'0')} / ${m[0]}</p><h2>${m[1]}</h2><p>${m[2]}</p><p class="fit"><b>こんな生徒に</b><br>${m[3]}</p><p class="muted">${m[4]}</p><a href="${m[5]}" target="_blank" rel="noopener">公式の詳しい説明 ↗</a></article>`).join('');$('source-links').innerHTML=methods.map(m=>`<a href="${m[5]}" target="_blank" rel="noopener">${m[0]} ↗</a>`).join('');renderFilters();renderResults();updateCount();
 
@@ -129,7 +130,8 @@ const COACH={
   else if(p.kind==='難関高校'){reason='基礎の理解を確認したうえで、志望校に合わせた難度の演習と入試テーマに取り組むためです。';fit='進路に対応';checks.push('志望校の過去問と模試結果で、難度が合うかを確認する。');}
   else if(p.kind==='補強'){
    fit=['blocked','knowledge','habit'].includes(k)?'優先候補':'基本を確認する候補';
-   if(p.subject==='英語')reason='英単語の抜けを確認し、覚える・答える・覚え直す練習を繰り返して、英語学習の土台を整えるためです。';
+   if(p.subject==='英語'&&p.grade==='中3')reason='入試テーマと文法の弱点を確認し、理解を補う授業と演習を組み合わせて入試で使う基本を整えるためです。';
+   else if(p.subject==='英語')reason='英単語の抜けを確認し、覚える・答える・覚え直す練習を繰り返して、英語学習の土台を整えるためです。';
    else if(p.subject==='国語'&&p.grade.startsWith('小'))reason='漢字を覚える学習と毎回のテストを組み合わせ、覚えたつもりになっている部分を確かめるためです。';
    else if(comp.includes('自立'))reason='学校や普段の教材を使い、取り組む課題と解き直しの順番を決めて、基本問題を確実にするためです。';
    else reason='現在の学習範囲を基本レベルから振り返り、理解や知識の抜けを一つずつ確認するためです。';
@@ -148,6 +150,35 @@ const COACH={
  },
  load(selected,capacity,budget,extras){const counts=selected.map(x=>countOf(x.composition));const unknown=counts.some(x=>x===null),total=counts.reduce((a,b)=>a+(b||0),0);const hasCapacity=capacity!==''&&Number(capacity)>0;const feesKnown=selected.length>0&&selected.every(x=>validMoney(x.price))&&validMoney(extras);const amount=feesKnown?selected.reduce((a,x)=>a+Number(x.price),Number(extras)):null;return {total,unknown,over:hasCapacity&&total>Number(capacity),remaining:hasCapacity?Number(capacity)-total:null,feesKnown,amount,overBudget:feesKnown&&budget!==''&&Number(budget)>=0&&amount>Number(budget)};}
 };
+
+'use strict';
+// Validate completely before replacing the user's current work.
+function validatedPlanState(s){
+ const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
+ const str=(v,limit=5000)=>{if(v===undefined)return '';if(typeof v!=='string'||v.length>limit)throw Error('文字項目が不正です');return v;};
+ const choice=(v,values,fallback)=>{if(v===undefined)return fallback;if(!values.includes(v))throw Error('選択項目が不正です');return v;};
+ const cash=v=>{if(v===undefined||v==='')return '';if(!validMoney(v))throw Error('金額が不正です');return String(v);};
+ if(!object(s)||!grades.includes(s.grade)||!Array.isArray(s.selected)||s.selected.length>30||!object(s.fields))throw Error('保存形式が不正です');
+ const result={grade:s.grade,case:choice(s.case,cases.map(c=>c.id),'foundation'),subject:str(s.subject||'すべて',60),schoolType:choice(s.schoolType,['standard','self'],'standard'),route:choice(s.route,['general','recommend','advanced'],'general'),selected:[],fields:{},verified:s.verified===true,extras:cash(s.extras),showAll:s.showAll===true};
+ if(s.verified!==undefined&&typeof s.verified!=='boolean')throw Error('確認状態が不正です');
+ const ids=new Set();for(const x of s.selected){
+  if(!object(x))throw Error('講座が不正です');const p=planById(x.id);
+  if(!p||p.grade!==s.grade||ids.has(x.id))throw Error('学年または講座が不正です');ids.add(x.id);
+  const item={id:p.id,custom:p.kind==='オリジナル',price:cash(x.price)};
+  for(const key of ['composition','description','title','goal','reason']){if(typeof x[key]!=='string')throw Error('講座の文章が不正です');item[key]=str(x[key]);}
+  for(const key of ['focus','measure','home','priority','meaningNow','meaningAfter'])item[key]=str(x[key]);
+  result.selected.push(item);
+ }
+ for(const key of ['student','school','teacher','goal','message','period','deadline','notes','phaseStart','phaseDuring','phaseEnd','homeMessage'])result.fields[key]=str(s.fields[key]);
+ if(s.fields.includeMeaning!==undefined&&typeof s.fields.includeMeaning!=='boolean')throw Error('添付設定が不正です');
+ result.fields.includeMeaning=s.fields.includeMeaning!==false;
+ const c=s.coach===undefined?{}:s.coach;if(!object(c))throw Error('面談情報が不正です');
+ result.coach={need:choice(c.need,Object.keys(COACH.profiles),'habit'),readiness:choice(c.readiness,['unknown','support','ready'],'unknown')};
+ for(const key of ['prior','evidence'])result.coach[key]=str(c[key]);
+ for(const key of ['capacity','budget']){const v=c[key];if(v===undefined||v==='')result.coach[key]='';else{if(!validMoney(v)||(key==='capacity'&&Number(v)<1))throw Error('回数・予算が不正です');result.coach[key]=String(v);}}
+ return result;
+}
+function applyPlanState(s){Object.assign(state,s);$('search').value='';if($('show-all'))$('show-all').checked=state.showAll;updateCount();renderFilters();renderResults();renderProposal();}
 
 'use strict';
 state.coach={need:'habit',readiness:'unknown',prior:'',capacity:'',budget:'',evidence:''};state.showAll=false;
@@ -171,10 +202,10 @@ document.querySelector('.editor').append(flowEditor);
 const backup=document.createElement('div');backup.className='backup-actions';backup.innerHTML='<h3>別のPCでも編集を続ける</h3><button id="export-plan" class="secondary">編集用ファイルを保存</button><label class="filelabel">編集用ファイルを開く<input id="import-plan" type="file" accept=".json,application/json"></label><p class="muted">生徒名・社員用メモを含みます。保護者には上部の「提案書を保存」を使ってください。</p>';document.querySelector('.editor').append(backup);
 const oldRenderFilters=renderFilters;renderFilters=function(){oldRenderFilters();const c=coachProfile();for(const k of ['need','readiness','capacity','budget','prior','evidence'])if($(k))$(k).value=c[k]??'';updateCoachLead();};
 function updateCoachLead(){const p=coachProfile();$('diagnosis-lead').textContent=COACH.profiles[p.need]?.lead||COACH.profiles.habit.lead;}
-const oldResults=renderResults;renderResults=function(){oldResults();const profile=coachProfile();document.querySelectorAll('#results .card').forEach(card=>{const id=card.querySelector('[data-add]').dataset.add,p=planById(id),info=COACH.explain(p,profile);card.querySelector('.reason').innerHTML='<b>'+esc(info.fit)+'</b>'+esc(info.reason);card.querySelector('.goal').innerHTML='<b>終了時に、ここを確認</b><br>'+esc(info.measure);const detail=card.querySelector('details');detail.insertAdjacentHTML('afterbegin','<div class="coach-check"><b>提案前に確かめること</b><ul>'+info.checks.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>');const action=document.createElement('button');action.className='textbtn explain-button';action.textContent='面談での伝え方を見る';action.onclick=()=>showTalk(p);card.querySelector('.card-bottom').prepend(action);});
+const oldResults=renderResults;renderResults=function(){oldResults();const profile=coachProfile();document.querySelectorAll('#results .card').forEach(card=>{const id=card.querySelector('[data-add]').dataset.add,p=planById(id),info=COACH.explain({...p,composition:effective(p)},profile);card.querySelector('.reason').innerHTML='<b>'+esc(info.fit)+'</b>'+esc(info.reason);card.querySelector('.goal').innerHTML='<b>終了時に、ここを確認</b><br>'+esc(info.measure);const detail=card.querySelector('details');detail.insertAdjacentHTML('afterbegin','<div class="coach-check"><b>提案前に確かめること</b><ul>'+info.checks.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>');const action=document.createElement('button');action.className='textbtn explain-button';action.textContent='面談での伝え方を見る';action.onclick=()=>showTalk(p);card.querySelector('.card-bottom').prepend(action);});
  const subject=state.subject==='すべて'?(state.grade.startsWith('小')?'算数':'数学'):state.subject;const info=COACH.subject[subject]||COACH.subject.数学;$('interview').innerHTML=`<div><span class="eyebrow">面談のひとこと</span><h3>${esc(subject)}の提案前に、ここを聞こう。</h3><p>${esc(info.question)}</p></div><div><b>見立ての確認</b><p>${esc(COACH.profiles[profile.need]?.lead||'')}</p></div>`;if(!document.querySelector('#results .card')&&!state.showAll)$('results').insertAdjacentHTML('beforeend','<button class="secondary" id="see-all-empty">この学年の全プランを見る</button>');$('see-all-empty')?.addEventListener('click',()=>{state.showAll=true;$('show-all').checked=true;renderResults()});updateTray();};
-function showTalk(p){const i=COACH.explain(p,coachProfile()),copy=copyFor(p),d=document.createElement('dialog');d.className='talk-dialog';d.innerHTML=`<form method="dialog"><button class="textbtn close-dialog" value="close">閉じる ×</button></form><p class="eyebrow">社員向け・面談サポート</p><h2>${esc(p.grade+' '+p.subject+' '+p.kind)}</h2><div class="talk-block"><b>1　今の状況を伺う</b><p>${esc(i.question)}</p></div><div class="talk-block"><b>2　取り組む理由を伝える</b><p>「${esc(i.reason)}」</p></div><div class="talk-block"><b>3　学び方を具体的に</b><p>${esc(copy.desc)}</p><p>${esc(effective(p))}</p></div><div class="talk-block"><b>4　成果の確かめ方を共有</b><p>「${esc(i.measure)}」</p></div><details open><summary>こんな質問を受けたら</summary><p><b>全部受けた方がいいですか？</b><br>優先課題と通える回数から絞ります。すべての受講を前提にしません。</p><p><b>冬だけで点数は上がりますか？</b><br>点数を約束せず、まずはこの講座で扱う単元と確認方法を具体的に共有します。</p><p><b>自立学習は自習とどう違いますか？</b><br>計画・進捗確認・振り返りを通じて学習の進め方を身につけます。冬期の実際の対応は校舎の運用を確認します。</p></details><p class="muted">面談用の提案例。本人の答案と希望を踏まえて言い換えてください。</p>`;document.body.append(d);d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();}
-const originalAdd=addPlan;addPlan=async function(id){const p=planById(id),existing=state.selected.findIndex(x=>planById(x.id)?.subject===p.subject);if(existing>=0){if(!await ask('同じ教科の候補が選ばれています。今回の候補に入れ替えますか？'))return;state.selected.splice(existing,1)}originalAdd(id);const item=state.selected.find(x=>x.id===id),i=COACH.explain(p,coachProfile());Object.assign(item,{reason:i.reason,measure:i.measure,home:i.home,goal:copyFor(p).goal,focus:'',priority:'最優先'});updateTray();};
+function showTalk(p){const i=COACH.explain({...p,composition:effective(p)},coachProfile()),copy=copyFor(p),d=document.createElement('dialog');d.className='talk-dialog';d.innerHTML=`<form method="dialog"><button class="textbtn close-dialog" value="close">閉じる ×</button></form><p class="eyebrow">社員向け・面談サポート</p><h2>${esc(p.grade+' '+p.subject+' '+p.kind)}</h2><div class="talk-block"><b>1　今の状況を伺う</b><p>${esc(i.question)}</p></div><div class="talk-block"><b>2　取り組む理由を伝える</b><p>「${esc(i.reason)}」</p></div><div class="talk-block"><b>3　学び方を具体的に</b><p>${esc(copy.desc)}</p><p>${esc(effective(p))}</p></div><div class="talk-block"><b>4　成果の確かめ方を共有</b><p>「${esc(i.measure)}」</p></div><details open><summary>こんな質問を受けたら</summary><p><b>全部受けた方がいいですか？</b><br>優先課題と通える回数から絞ります。すべての受講を前提にしません。</p><p><b>冬だけで点数は上がりますか？</b><br>点数を約束せず、まずはこの講座で扱う単元と確認方法を具体的に共有します。</p><p><b>自立学習は自習とどう違いますか？</b><br>計画・進捗確認・振り返りを通じて学習の進め方を身につけます。冬期の実際の対応は校舎の運用を確認します。</p></details><p class="muted">面談用の提案例。本人の答案と希望を踏まえて言い換えてください。</p>`;document.body.append(d);d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();}
+const originalAdd=addPlan;addPlan=async function(id){const p=planById(id),existing=state.selected.findIndex(x=>planById(x.id)?.subject===p.subject);if(existing>=0){if(!await ask('同じ教科の候補が選ばれています。今回の候補に入れ替えますか？'))return;state.selected.splice(existing,1)}originalAdd(id);const item=state.selected.find(x=>x.id===id),i=COACH.explain({...p,composition:effective(p)},coachProfile());Object.assign(item,{reason:i.reason,measure:i.measure,home:i.home,goal:copyFor(p).goal,focus:'',priority:'最優先'});updateTray();};
 function reviewData(){const p=coachProfile();return COACH.load(state.selected,p.capacity,p.budget,state.extras)}
 function updateTray(){const x=reviewData();$('tray-summary').innerHTML=`<b>${state.selected.length}講座を選択</b><span>${state.selected.length?`合計 ${x.total}回${x.unknown?' ＋ 回数未定':''}`:'まずは優先したい教科をひとつ。'}</span>${x.over?'<strong>通える回数を超えています</strong>':''}`;$('to-proposal').disabled=!state.selected.length;renderComparison();}
 const oldCount=updateCount;updateCount=function(){oldCount();updateTray();};
@@ -196,7 +227,7 @@ steps.addEventListener('click',e=>{const b=e.target.closest('[data-stage]');if(!
 const originalView=view;view=function(v){originalView(v);tray.hidden=v!=='discover';steps.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.stage===(v==='proposal'?'3':'1')));};
 function downloadJson(){const data={version:2,app:'sanaru-winter-guide',state};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='冬期講座_編集用.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 $('export-plan').onclick=downloadJson;
-$('import-plan').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>1000000)throw Error();const data=JSON.parse(await file.text()),s=data.state;if(data.app!=='sanaru-winter-guide'||data.version!==2||!grades.includes(s.grade)||!Array.isArray(s.selected)||s.selected.length>30||!s.selected.every(x=>planById(x.id)?.grade===s.grade&&['composition','description','title','goal','reason'].every(k=>typeof x[k]==='string'&&x[k].length<5000))||!cases.some(c=>c.id===s.case)||!['standard','self'].includes(s.schoolType)||!['general','recommend','advanced'].includes(s.route)||!s.fields||typeof s.fields!=='object')throw Error();if(state.selected.length&&!await ask('現在の入力を、ファイルの提案内容に置き換えますか？'))return;for(const key of ['grade','case','subject','schoolType','route','selected','fields','verified','extras'])state[key]=s[key];state.coach=s.coach&&COACH.profiles[s.coach.need]?s.coach:{need:'habit'};renderFilters();updateCount();renderResults();renderProposal();toast('編集用ファイルを読み込みました')}catch{toast('このアプリで保存した編集用ファイルを選んでください')}e.target.value='';});
+$('import-plan').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>1000000)throw Error();const data=JSON.parse(await file.text());if(data.app!=='sanaru-winter-guide'||data.version!==2)throw Error();const checked=validatedPlanState(data.state);if(state.selected.length&&!await ask('現在の入力を、ファイルの提案内容に置き換えますか？'))return;applyPlanState(checked);toast('編集用ファイルを読み込みました')}catch{toast('このアプリで保存した編集用ファイルを選んでください。現在の入力は変更していません。')}finally{e.target.value='';}});
 renderFilters();renderResults();updateCount();
 
 'use strict';
@@ -311,6 +342,7 @@ renderPaper=function(){winterParentRender();const paper=$('paper');paper.classLi
  for(const root of [paper,...paper.querySelectorAll('.meaning-page')]){const cover=document.createElement('header');cover.className='document-cover';const end=root===paper?root.querySelector('.letter'):root.querySelector('h1');const nodes=[];for(let n=root.firstElementChild;n;n=n.nextElementSibling){nodes.push(n);if(n===end)break;}root.prepend(cover);nodes.forEach(n=>cover.append(n));}
 };
 function parentDocumentHTML(){const scene=document.querySelectorAll('style');let artwork='';for(const el of scene){const match=el.textContent.match(/--winter-scene\s*:\s*(url\([^)]*\))/);if(match){artwork=match[1];break;}}
+ if(!artwork&&globalThis.WINTER_PDF_ASSETS?.art)artwork='url("data:image/jpeg;base64,'+globalThis.WINTER_PDF_ASSETS.art+'")';
  return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2026冬期講座 ご提案書</title><style>:root{--winter-scene:'+ (artwork||'url("assets/winter-landscape.png")')+'}'+PARENT_CSS+'</style></head><body class="parent-document">'+$('paper').innerHTML+'</body></html>';
 }
 const oldDownload=$('download'),newDownload=oldDownload.cloneNode(true);oldDownload.replaceWith(newDownload);
@@ -372,7 +404,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
  let page,y,title,kicker;const audit=[];
  function drawLine(t,x,top,size=10,font='sans',ink='ink'){
   page.drawText(t,{x,y:top-size,font:fonts[font],size,color:color(ink)});
-  audit.push({page:doc.getPageCount(),text:t,top,bottom:top-size,x,width:fonts[font].widthOfTextAtSize(t,size)});
+  audit.push({page:doc.getPages().indexOf(page)+1,text:t,top,bottom:top-size,x,width:fonts[font].widthOfTextAtSize(t,size)});
  }
  function raw(t,x,top,w,size=10,font='sans',ink='ink',leading=size*1.7){const ls=lines(t,w,size,font);ls.forEach((line,i)=>drawLine(line,x,top-i*leading,size,font,ink));return top-ls.length*leading;}
  function newPage(continuation=false){
@@ -402,6 +434,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
   const h=65+17*(lines('おすすめする理由　'+x.reason,503).length+lines('冬の到達目標　'+x.goal,503).length);ensure(Math.min(h,500));
   paragraph(String(i+1).padStart(2,'0')+'　'+x.title,{x:46,w:503,size:16,font:'serif',ink:'blue',gap:3});
   paragraph(x.composition.replace(/\n/g,' ')+' / '+grade,{x:46,w:503,size:9,ink:'muted',gap:6});
+  if(x.description)paragraph(x.description,{x:46,w:503,size:9,ink:'muted',gap:7});
   paragraph('おすすめする理由　'+x.reason,{x:46,w:503,gap:5});paragraph('冬の到達目標　'+x.goal,{x:46,w:503,gap:17});
  });
  start('小さな一歩を、\n確かな手応えに。','冬期講座 ご提案書 / 学び方とご相談事項');
@@ -446,20 +479,63 @@ document.querySelector('.preview-column > .muted').replaceWith(pdfStatus);
 const pdfPreview=document.createElement('section');pdfPreview.id='pdf-preview';pdfPreview.hidden=true;pdfPreview.innerHTML='<div class="pdf-actions"><b id="pdf-summary"></b><a id="pdf-save" class="primary linkbutton">PDFを保存 ↓</a><a id="pdf-open" class="secondary linkbutton" target="_blank" rel="noopener">PDFを開く ↗</a><button id="pdf-close" class="textbtn" type="button">プレビューを閉じる</button></div><p class="muted">下のPDFが保存されます。入力を変更した場合は「まとめてPDFを作成」で作り直してください。表示できない端末では「PDFを保存」をご利用ください。</p><iframe title="作成した保護者向けPDF" id="pdf-frame"></iframe>';
 pdfStatus.after(pdfPreview);
 const pdfUIStyle=document.createElement('style');pdfUIStyle.textContent='#pdf-preview{background:#edf5fb;border:1px solid #c9dfee;border-radius:16px;padding:18px;margin:15px 0}.pdf-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.pdf-actions b{margin-right:auto}#pdf-frame{width:100%;height:760px;border:0;border-radius:8px;background:white}#pdf-status[data-error=true]{color:#a34538}@media(max-width:650px){#pdf-frame{height:560px}.pdf-actions a{font-size:12px}}@media print{#pdf-preview,#pdf-status{display:none!important}}';document.head.append(pdfUIStyle);
-let activePDFURL=null,pdfBusy=false;
+let activePDFURL=null,pdfBusy=false,pdfSnapshot='';
+function refreshPDFState(){
+ if(activePDFURL&&pdfSnapshot!==JSON.stringify(parentPDFModel())){
+  URL.revokeObjectURL(activePDFURL);activePDFURL=null;pdfSnapshot='';pdfPreview.hidden=true;
+  for(const id of ['pdf-save','pdf-open'])$(id).removeAttribute('href');$('pdf-frame').removeAttribute('src');
+  pdfStatus.textContent='入力が変わりました。最新の内容で「まとめてPDFを作成」を押してください。';
+ }
+ pdfButton.disabled=pdfBusy||!state.selected.length;
+}
+const pdfRenderPaper=renderPaper;renderPaper=function(){pdfRenderPaper();refreshPDFState();};
+const pdfUpdateCount=updateCount;updateCount=function(){pdfUpdateCount();refreshPDFState();};
 $('pdf-close').onclick=()=>{pdfPreview.hidden=true;};
 pdfButton.addEventListener('click',async()=>{
  if(pdfBusy||!state.selected.length)return;
  pdfBusy=true;pdfButton.disabled=true;pdfButton.textContent='冬の資料を作成中…';pdfStatus.dataset.error='false';pdfStatus.textContent='選んだ講座と入力内容からPDFを作成しています。';pdfPreview.hidden=true;
- const model=parentPDFModel();
  try{
+  const model=parentPDFModel(),snapshot=JSON.stringify(model);
   await new Promise(resolve=>setTimeout(resolve,30));
   const result=await WinterPDF.create(model);
+  if(snapshot!==JSON.stringify(parentPDFModel())){pdfStatus.textContent='作成中に入力が変わりました。もう一度PDFを作成してください。';return;}
   if(activePDFURL)URL.revokeObjectURL(activePDFURL);
+  pdfSnapshot=snapshot;
   activePDFURL=URL.createObjectURL(new Blob([result.bytes],{type:'application/pdf'}));
   $('pdf-save').href=activePDFURL;$('pdf-save').download='2026冬期講座_ご提案書・冬の学び.pdf';$('pdf-open').href=activePDFURL;$('pdf-frame').src=activePDFURL;
   $('pdf-summary').textContent=result.pageCount+'ページのPDFができました';pdfPreview.hidden=false;pdfStatus.textContent='PDFを確認して「PDFを保存」を押してください。日本語フォントと雪景色を埋め込んでいます。';pdfPreview.scrollIntoView({behavior:'smooth',block:'start'});
  }catch(error){pdfStatus.dataset.error='true';pdfStatus.textContent='PDFを作成できませんでした。'+(error.message||'入力内容を確認して、もう一度お試しください。');}
  finally{pdfBusy=false;pdfButton.disabled=!state.selected.length;pdfButton.textContent='まとめてPDFを作成 ↓';}
 });
+
+'use strict';
+// Keep the everyday path short; retain staff tools as optional disclosure.
+document.body.classList.add('simple-ui');
+const staffTools=document.createElement('details');staffTools.className='staff-tools';staffTools.innerHTML='<summary>必要に応じて：生徒の状況・予算・面談のヒント</summary>';
+document.querySelector('.subjectline').after(staffTools);
+for(const el of [diagnosis,interview,resultControls])staffTools.append(el);
+const simpleFilters=renderFilters;renderFilters=function(){
+ if(['小1','小2','小3'].includes(state.grade)&&state.case!=='roots'){state.case='roots';coachProfile().need='roots';}
+ simpleFilters();
+ const labels={foundation:[state.grade==='中3'?'入試対策':'補強','基本を固めたい'],practice:['強化','演習で力を伸ばしたい'],roots:['力・作文','読む・考える・英語・表現']};
+ $('cases').innerHTML=Object.entries(labels).filter(([key])=>!((['小1','小2','小3'].includes(state.grade)&&key!=='roots')||(['中3','高3'].includes(state.grade)&&key==='practice'))).map(([key,[name,sub]])=>`<button class="case ${state.case===key||(key==='practice'&&state.case==='ahead')?'selected':''}" data-case="${key}" aria-pressed="${state.case===key||(key==='practice'&&state.case==='ahead')}"><b>${name}</b><small>${sub}</small></button>`).join('');
+ $('route').closest('label').hidden=state.grade!=='中3';
+ $('route').querySelector('option[value="general"]').textContent='入試の基礎補強';
+ document.querySelector('.question').textContent='この冬、取り組みたいこと';
+};
+const simpleResults=renderResults;renderResults=function(){simpleResults();document.querySelectorAll('#results .card').forEach(card=>{
+ const p=planById(card.querySelector('[data-add]').dataset.add),body=card.querySelector('.card-body'),details=card.querySelector('details');
+ card.querySelector('h3').textContent=p.subject+' '+(p.kind==='力シリーズ'?'':p.kind==='オリジナル'?'個別設計':p.kind);
+ card.querySelector('.eyebrow').textContent=p.grade+' / '+(p.id.startsWith('force-')?'開講対象は校舎で確認':'冬期講座');
+ details.querySelector('summary').textContent='学習内容・教材・提案のポイントを見る';
+ for(const el of [body.querySelector('.desc'),body.querySelector('.goal'),card.querySelector('.explain-button')])if(el)details.append(el);
+ });};
+const simpleCSS=document.createElement('style');simpleCSS.textContent=`
+.simple-ui .hero{min-height:280px;padding-top:24px;padding-bottom:24px}.simple-ui .hero h1{font-size:46px}.simple-ui .hero .intro{font-size:15px}.simple-ui .hero .linkbutton{min-height:48px;font-size:15px}.simple-ui .hero .winter-art{bottom:16px}
+.simple-ui .sectionhead{margin-bottom:16px}.simple-ui .sectionhead h2{font-size:30px}.simple-ui .profilebar{padding:20px 24px}.simple-ui .profilebar label[hidden]{display:none}.simple-ui .cases{display:flex;gap:12px}.simple-ui .case{flex:1;padding:15px;text-align:left;min-height:0}.simple-ui .case b{font-size:18px}.simple-ui .case small{margin-top:4px}.simple-ui .question{margin-top:22px}
+.staff-tools{border:1px solid #cbdfea;background:#ffffffb8;border-radius:14px;margin:20px 0;padding:14px 20px}.staff-tools>summary{cursor:pointer;color:#496b83;font-size:13px}.staff-tools .diagnosis{margin-top:16px}.staff-tools .interview{margin:16px 0}.simple-ui .resulthead{margin-top:25px}.simple-ui .card h3{font-size:23px;margin:8px 0 14px}.simple-ui .card .reason{font-size:13px;line-height:1.8;margin:16px 0}.simple-ui .card .reason b{font-size:11px;color:#5a7b93}.simple-ui .card details{font-size:12px}.simple-ui .card .card-bottom{padding-top:10px}.simple-ui .card-body{padding:22px}.simple-ui .card .explain-button{display:block;margin-top:14px}.simple-ui .result-controls{margin:16px 0 0}
+@media(max-width:760px){.simple-ui .hero{min-height:300px;padding:24px 22px 65px}.simple-ui .hero h1{font-size:31px}.simple-ui .hero .intro{font-size:12px}.simple-ui .hero .linkbutton{font-size:13px}.simple-ui .cases{gap:7px}.simple-ui .case{padding:11px 8px}.simple-ui .case b{font-size:16px}.simple-ui .case small{font-size:10px}.simple-ui .sectionhead h2{font-size:25px}.staff-tools{padding:13px}.simple-ui .profilebar{padding:16px}}
+@media print{.staff-tools{display:none!important}}
+`;document.head.append(simpleCSS);
+renderFilters();renderResults();
 </script></body></html>

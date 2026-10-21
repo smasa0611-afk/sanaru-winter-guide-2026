@@ -15,16 +15,28 @@ document.querySelector('.preview-column > .muted').replaceWith(pdfStatus);
 const pdfPreview=document.createElement('section');pdfPreview.id='pdf-preview';pdfPreview.hidden=true;pdfPreview.innerHTML='<div class="pdf-actions"><b id="pdf-summary"></b><a id="pdf-save" class="primary linkbutton">PDFを保存 ↓</a><a id="pdf-open" class="secondary linkbutton" target="_blank" rel="noopener">PDFを開く ↗</a><button id="pdf-close" class="textbtn" type="button">プレビューを閉じる</button></div><p class="muted">下のPDFが保存されます。入力を変更した場合は「まとめてPDFを作成」で作り直してください。表示できない端末では「PDFを保存」をご利用ください。</p><iframe title="作成した保護者向けPDF" id="pdf-frame"></iframe>';
 pdfStatus.after(pdfPreview);
 const pdfUIStyle=document.createElement('style');pdfUIStyle.textContent='#pdf-preview{background:#edf5fb;border:1px solid #c9dfee;border-radius:16px;padding:18px;margin:15px 0}.pdf-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.pdf-actions b{margin-right:auto}#pdf-frame{width:100%;height:760px;border:0;border-radius:8px;background:white}#pdf-status[data-error=true]{color:#a34538}@media(max-width:650px){#pdf-frame{height:560px}.pdf-actions a{font-size:12px}}@media print{#pdf-preview,#pdf-status{display:none!important}}';document.head.append(pdfUIStyle);
-let activePDFURL=null,pdfBusy=false;
+let activePDFURL=null,pdfBusy=false,pdfSnapshot='';
+function refreshPDFState(){
+ if(activePDFURL&&pdfSnapshot!==JSON.stringify(parentPDFModel())){
+  URL.revokeObjectURL(activePDFURL);activePDFURL=null;pdfSnapshot='';pdfPreview.hidden=true;
+  for(const id of ['pdf-save','pdf-open'])$(id).removeAttribute('href');$('pdf-frame').removeAttribute('src');
+  pdfStatus.textContent='入力が変わりました。最新の内容で「まとめてPDFを作成」を押してください。';
+ }
+ pdfButton.disabled=pdfBusy||!state.selected.length;
+}
+const pdfRenderPaper=renderPaper;renderPaper=function(){pdfRenderPaper();refreshPDFState();};
+const pdfUpdateCount=updateCount;updateCount=function(){pdfUpdateCount();refreshPDFState();};
 $('pdf-close').onclick=()=>{pdfPreview.hidden=true;};
 pdfButton.addEventListener('click',async()=>{
  if(pdfBusy||!state.selected.length)return;
  pdfBusy=true;pdfButton.disabled=true;pdfButton.textContent='冬の資料を作成中…';pdfStatus.dataset.error='false';pdfStatus.textContent='選んだ講座と入力内容からPDFを作成しています。';pdfPreview.hidden=true;
- const model=parentPDFModel();
  try{
+  const model=parentPDFModel(),snapshot=JSON.stringify(model);
   await new Promise(resolve=>setTimeout(resolve,30));
   const result=await WinterPDF.create(model);
+  if(snapshot!==JSON.stringify(parentPDFModel())){pdfStatus.textContent='作成中に入力が変わりました。もう一度PDFを作成してください。';return;}
   if(activePDFURL)URL.revokeObjectURL(activePDFURL);
+  pdfSnapshot=snapshot;
   activePDFURL=URL.createObjectURL(new Blob([result.bytes],{type:'application/pdf'}));
   $('pdf-save').href=activePDFURL;$('pdf-save').download='2026冬期講座_ご提案書・冬の学び.pdf';$('pdf-open').href=activePDFURL;$('pdf-frame').src=activePDFURL;
   $('pdf-summary').textContent=result.pageCount+'ページのPDFができました';pdfPreview.hidden=false;pdfStatus.textContent='PDFを確認して「PDFを保存」を押してください。日本語フォントと雪景色を埋め込んでいます。';pdfPreview.scrollIntoView({behavior:'smooth',block:'start'});

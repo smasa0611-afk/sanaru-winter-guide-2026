@@ -8,7 +8,7 @@ for name in ['style','winter']:
   image=base64.b64encode((p/'dist/assets/winter-landscape.png').read_bytes()).decode('ascii')
   css=css.replace('assets/winter-landscape.png','data:image/png;base64,'+image)
  s=s.replace(f'<link rel="stylesheet" href="{name}.css">','<style>'+css+'</style>')
-names=['data','app','planning','coach','meaning','winter-ui','parent-doc','vendor/pdf-lib.min','vendor/fontkit.min','pdf-assets','pdf-engine','pdf-ui']
+names=['data','app','planning','state-io','coach','meaning','winter-ui','parent-doc','vendor/pdf-lib.min','vendor/fontkit.min','pdf-assets','pdf-engine','pdf-ui','simple-ui']
 scripts='\n'.join((p/f'dist/{name}.js').read_text(encoding='utf-8').replace('</script','<\\/script') for name in names)
 for name in names:s=s.replace(f'<script defer src="{name}.js"></script>','')
 s=s.replace('</body>','<script>'+scripts+'</script></body>')

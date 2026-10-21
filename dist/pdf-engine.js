@@ -32,7 +32,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
  let page,y,title,kicker;const audit=[];
  function drawLine(t,x,top,size=10,font='sans',ink='ink'){
   page.drawText(t,{x,y:top-size,font:fonts[font],size,color:color(ink)});
-  audit.push({page:doc.getPageCount(),text:t,top,bottom:top-size,x,width:fonts[font].widthOfTextAtSize(t,size)});
+  audit.push({page:doc.getPages().indexOf(page)+1,text:t,top,bottom:top-size,x,width:fonts[font].widthOfTextAtSize(t,size)});
  }
  function raw(t,x,top,w,size=10,font='sans',ink='ink',leading=size*1.7){const ls=lines(t,w,size,font);ls.forEach((line,i)=>drawLine(line,x,top-i*leading,size,font,ink));return top-ls.length*leading;}
  function newPage(continuation=false){
@@ -62,6 +62,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
   const h=65+17*(lines('おすすめする理由　'+x.reason,503).length+lines('冬の到達目標　'+x.goal,503).length);ensure(Math.min(h,500));
   paragraph(String(i+1).padStart(2,'0')+'　'+x.title,{x:46,w:503,size:16,font:'serif',ink:'blue',gap:3});
   paragraph(x.composition.replace(/\n/g,' ')+' / '+grade,{x:46,w:503,size:9,ink:'muted',gap:6});
+  if(x.description)paragraph(x.description,{x:46,w:503,size:9,ink:'muted',gap:7});
   paragraph('おすすめする理由　'+x.reason,{x:46,w:503,gap:5});paragraph('冬の到達目標　'+x.goal,{x:46,w:503,gap:17});
  });
  start('小さな一歩を、\n確かな手応えに。','冬期講座 ご提案書 / 学び方とご相談事項');

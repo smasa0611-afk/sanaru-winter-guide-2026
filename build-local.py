@@ -1,13 +1,16 @@
 from pathlib import Path
+import base64
 p=Path(__file__).parent
 s=(p/'dist/index.html').read_text(encoding='utf-8')
-s=s.replace('<link rel="stylesheet" href="style.css">','<style>'+(p/'dist/style.css').read_text(encoding='utf-8')+'</style>')
-for name in ['data','app','planning','coach','meaning']:
- content=(p/f'dist/{name}.js').read_text(encoding='utf-8').replace('</script','<\\/script')
- s=s.replace(f'<script defer src="{name}.js"></script>',f'<script>{content}</script>' if name=='data' else '') if name=='data' else s
-# UI scripts must run after the document has been parsed.
-scripts='\n'.join((p/f'dist/{name}.js').read_text(encoding='utf-8').replace('</script','<\\/script') for name in ['app','planning','coach','meaning'])
-for name in ['app','planning','coach','meaning']:s=s.replace(f'<script defer src="{name}.js"></script>','')
+for name in ['style','winter']:
+ css=(p/f'dist/{name}.css').read_text(encoding='utf-8')
+ if name=='winter':
+  image=base64.b64encode((p/'dist/assets/winter-landscape.png').read_bytes()).decode('ascii')
+  css=css.replace('assets/winter-landscape.png','data:image/png;base64,'+image)
+ s=s.replace(f'<link rel="stylesheet" href="{name}.css">','<style>'+css+'</style>')
+names=['data','app','planning','coach','meaning','winter-ui']
+scripts='\n'.join((p/f'dist/{name}.js').read_text(encoding='utf-8').replace('</script','<\\/script') for name in names)
+for name in names:s=s.replace(f'<script defer src="{name}.js"></script>','')
 s=s.replace('</body>','<script>'+scripts+'</script></body>')
 (p/'冬期講座提案アプリ.html').write_text(s,encoding='utf-8')
-print('Standalone HTML built')
+print('Standalone HTML built with embedded winter artwork')

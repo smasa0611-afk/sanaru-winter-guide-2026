@@ -1,0 +1,15 @@
+2026-10-21 冬景色デザイン改修
+
+ユーザー提供画像「冬の学びを選ぶ予備校アプリ.png」をデザインの参照として使用。
+画像生成：組み込みimage_gen。制作物：dist/assets/winter-landscape.png
+画像の生成プロンプト：
+Create a text-free website background illustration closely matching the supplied reference's snowy winter landscape, NOT its UI. Reference is style/composition reference. Panoramic 1536x864 landscape illustration, delicate watercolor painterly premium Japanese education winter brochure aesthetic. Icy powder blue snowy evergreen forest and distant blue mountains, snowflakes gently scattered, a cozy white chalet with dark teal door, golden illuminated windows and tall snow capped roof at right center (around x=76%, y=55%), chimney delicate white smoke and pale golden winter sun at upper right. Left half and middle area must be very light powder blue mist and white snow with low visual contrast, roomy blank area to overlay dark blue title in HTML. Foreground soft white snowbanks and meandering trail toward cottage, tiny red winter berries near lower right and subtle corner branches. Faithfully echo reference cozy cottage winter scene. No text, no letters, no logos, no UI, no border, no buttons, no people. High quality watercolor edges and subtle paper grain, restrained serene colors. Full bleed landscape with sky top and snowy foreground bottom.
+
+実装：
+- 深い青と淡い水色、透け感のある白を全画面へ統一。
+- デスクトップでは雪の家を右、HTMLの見出し・説明・操作ボタンを左へ配置。
+- 実際の操作可能なHTMLを保持。背景にテキストは含めない。
+- 選択講座と提案書ボタンを画面下へ固定。3ステップの現在位置を反映。
+- モバイルで1列へ切替。操作部品と文字を小さく縮めすぎない。
+- 印刷時は背景と操作ナビを除外し、保護者資料を白地で出力。
+- 単体HTMLには背景PNGも埋め込み。外部CSS・画像・スクリプトへの接続不要。

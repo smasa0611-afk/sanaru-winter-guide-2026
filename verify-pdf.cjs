@@ -1,4 +1,5 @@
 const fs=require('fs'),assert=require('assert/strict');
+fs.mkdirSync('output/pdf',{recursive:true});
 const harness=fs.readFileSync('verify-dom.cjs','utf8').split('(async()=>{')[0].replace('setTimeout(){},clearTimeout(){}','setTimeout,clearTimeout');
 eval(harness+`
 (async()=>{

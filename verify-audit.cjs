@@ -5,7 +5,7 @@ eval(harness+`
  assert.equal(document.querySelector('.staff-tools').hasAttribute('open'),false);
  assert.equal(document.querySelectorAll('#cases button').length,3);
  assert.ok(document.querySelector('#route').closest('label').hidden);
- assert.ok(document.querySelector('#results .desc').closest('details'));
+ run("state.subject='英語';renderResults()");assert.ok(!document.querySelector('#results .desc').closest('details'));
  const sample=JSON.parse(fs.readFileSync('samples/sample-data.json','utf8')).state;
  ctx.sampleInput=sample;const checked=run('validatedPlanState(sampleInput)');
  assert.equal(checked.selected.length,2);assert.equal(checked.grade,'小5');
@@ -14,14 +14,14 @@ eval(harness+`
   const before=run('JSON.stringify(state)');assert.throws(()=>run('validatedPlanState(badInput)'));assert.equal(run('JSON.stringify(state)'),before);
  }
  assert.equal(run('validMoney(null)'),false);assert.equal(run('validMoney(false)'),false);assert.equal(run("validMoney('   ')"),false);assert.equal(run('validMoney(0)'),true);
- run("state.grade='小5';state.case='roots';state.subject='すべて';state.selected=[];renderFilters();renderResults()");
+ run("state.grade='小5';state.case='roots';state.subject='閃きの力';state.selected=[];renderFilters();renderResults()");
  const force=run("PLANS.find(p=>p.grade==='小5'&&p.subject==='閃きの力')");
  const picker=document.querySelector('[data-count="'+force.id+'"]');assert.equal(picker.value,'8');picker.value='12';
  await run('addPlan('+JSON.stringify(force.id)+')');assert.equal(run('countOf(state.selected[0].composition)'),12);
- run("state.selected=[];state.grade='中3';state.case='roots';state.subject='すべて';renderFilters();renderResults()");
+ run("state.selected=[];state.grade='中3';state.case='roots';state.subject='閃きの力';renderFilters();renderResults()");
  assert.ok(document.querySelector('#route').closest('label').hidden);
  for(const b of document.querySelectorAll('#results [data-add]'))assert.equal(run('planById('+JSON.stringify(b.dataset.add)+').kind'),'力シリーズ');
- run("state.grade='小1';state.case='foundation';renderFilters();renderResults()");assert.ok(document.querySelectorAll('#results .card').length>0);
+ run("state.grade='小1';state.case='foundation';state.subject='作文';renderFilters();renderResults()");assert.ok(document.querySelectorAll('#results .card').length>0);
  assert.ok(run("COACH.explain(PLANS.find(p=>p.grade==='中3'&&p.subject==='英語'&&p.kind==='補強')).reason").includes('入試テーマ'));
  // Exercise every plan in both school types without rendering incompatible state.
  for(const p of run('PLANS'))for(const school of ['standard','self']){
@@ -35,4 +35,3 @@ eval(harness+`
  console.log('PASS: compact selection UI, every plan/school type, exact power-course options, middle-school entrance copy, atomic validation, empty fees and portable web HTML.');
 })().catch(e=>{console.error(e);process.exitCode=1});
 `);
-

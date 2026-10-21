@@ -13,7 +13,7 @@ function validatedPlanState(s){
   if(!p||p.grade!==s.grade||ids.has(x.id))throw Error('学年または講座が不正です');ids.add(x.id);
   const item={id:p.id,custom:p.kind==='オリジナル',price:cash(x.price)};
   for(const key of ['composition','description','title','goal','reason']){if(typeof x[key]!=='string')throw Error('講座の文章が不正です');item[key]=str(x[key]);}
-  for(const key of ['focus','measure','home','priority','meaningNow','meaningAfter'])item[key]=str(x[key]);
+  for(const key of ['focus','measure','home','priority','meaningNow','meaningAfter','schoolChange'])item[key]=str(x[key]);
   result.selected.push(item);
  }
  for(const key of ['student','school','teacher','goal','message','period','deadline','notes','phaseStart','phaseDuring','phaseEnd','homeMessage'])result.fields[key]=str(s.fields[key]);
@@ -23,6 +23,33 @@ function validatedPlanState(s){
  result.coach={need:choice(c.need,Object.keys(COACH.profiles),'habit'),readiness:choice(c.readiness,['unknown','support','ready'],'unknown')};
  for(const key of ['prior','evidence'])result.coach[key]=str(c[key]);
  for(const key of ['capacity','budget']){const v=c[key];if(v===undefined||v==='')result.coach[key]='';else{if(!validMoney(v)||(key==='capacity'&&Number(v)<1))throw Error('回数・予算が不正です');result.coach[key]=String(v);}}
+ result.schemaVersion=3;result.subjectProfiles={};result.confirmations={};result.legacyNotes=str(s.legacyNotes);
+ if(s.subjectProfiles!==undefined){
+  if(!object(s.subjectProfiles))throw Error('教科別情報が不正です');
+  for(const [subject,v] of Object.entries(s.subjectProfiles)){
+   if(!object(v)||!PLANS.some(p=>p.grade===s.grade&&p.subject===subject))throw Error('教科が不正です');
+   result.subjectProfiles[subject]={need:choice(v.need,Object.keys(COACH.profiles),'unknown'),readiness:choice(v.readiness,['unknown','support','ready'],'unknown'),prior:str(v.prior),focus:str(v.focus),reason:str(v.reason)};
+  }
+ }else{
+  const legacy=[c.need&&c.need!=='unknown'?'旧データの共通つまずき：'+(COACH.profiles[c.need]?.name||c.need):'',c.readiness&&c.readiness!=='unknown'?'旧データの共通理解状況：'+c.readiness:'',c.prior?'旧データの既受講内容：'+c.prior:''].filter(Boolean).join('\n');
+  result.legacyNotes=[result.legacyNotes,legacy].filter(Boolean).join('\n');
+ }
+ result.coach.need='unknown';result.coach.readiness='unknown';result.coach.prior='';
+ if(s.confirmations!==undefined){
+  if(!object(s.confirmations))throw Error('確認情報が不正です');
+  for(const [id,v] of Object.entries(s.confirmations)){
+   const plan=planById(id);if(!plan||plan.grade!==s.grade||!object(v)||!object(v.values)||!object(v.statuses))throw Error('確認形式が不正です');
+   const spec=confirmationSpec(plan),checked={values:{},statuses:{}};
+   for(const [key,label,type,options] of spec.fields){const value=v.values[key];if(value===undefined)continue;
+    if(type==='multi'){if(!Array.isArray(value)||value.length>options.length||value.some(t=>!options.includes(t)))throw Error('登録単元が不正です');checked.values[key]=[...new Set(value)];}
+    else if(type==='select')checked.values[key]=choice(value,['',...options],'');
+    else {checked.values[key]=str(value);if(type==='number'&&value!==''&&(!Number.isFinite(Number(value))||Number(value)<0))throw Error('確認数値が不正です');}
+   }
+   for(const [key] of spec.checks)checked.statuses[key]=choice(v.statuses[key],['unknown','done','consult'],'unknown');
+   result.confirmations[id]=checked;
+  }
+ }
+ if(s.schemaVersion!==3)result.verified=false;
  return result;
 }
 function applyPlanState(s){Object.assign(state,s);$('search').value='';if($('show-all'))$('show-all').checked=state.showAll;updateCount();renderFilters();renderResults();renderProposal();}

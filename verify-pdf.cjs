@@ -6,7 +6,7 @@ eval(harness+`
  const sample=JSON.parse(fs.readFileSync('samples/sample-data.json','utf8')).state;
  run('Object.assign(state,'+JSON.stringify(sample)+');renderProposal()');
  const model=run('parentPDFModel()');
- assert.equal(model.courses.length,2);assert.equal(model.countLabel,'合計16回');
+ assert.equal(model.courses.length,2);assert.ok(model.countLabel.startsWith('16授業枠'));
  const generate=async(m)=>{ctx.testModel=JSON.parse(JSON.stringify(m));return await run('WinterPDF.create(testModel)');};
  const result=await generate(model);
  fs.writeFileSync('output/pdf/アプリ出力_保護者向けサンプル.pdf',result.bytes);
@@ -22,7 +22,7 @@ eval(harness+`
  const overflow=await generate(long);bounds(overflow);assert.ok(overflow.pageCount>7);const all=overflow.audit.map(x=>x.text).join('');assert.ok(all.includes('【末尾メッセージ】'));assert.ok(all.includes('【末尾意義】'));
  fs.writeFileSync('output/pdf/検証用_長文複数講座.pdf',overflow.bytes);
  run("state.selected.forEach(x=>x.price='12000');state.extras='1000';state.verified=true;state.coach.evidence='非公開社員メモ';state.selected[0].meaningNow='個別編集した冬の理由'");
- const priced=run('parentPDFModel()');assert.ok(priced.totalLabel.includes('25,000'));assert.ok(!JSON.stringify(priced).includes('非公開社員メモ'));assert.equal(priced.courses[0].meaningNow,'個別編集した冬の理由');
+ run('for(const x of state.selected){const c=courseConfirmation(x.id);for(const [k] of confirmationSpec(planById(x.id)).checks)c.statuses[k]="done"}');const priced=run('parentPDFModel()');assert.ok(priced.totalLabel.includes('25,000'));assert.ok(!JSON.stringify(priced).includes('非公開社員メモ'));assert.equal(priced.courses[0].meaningNow,'個別編集した冬の理由');
  const invalid=JSON.parse(JSON.stringify(model));invalid.fields.student='未対応🦄';await assert.rejects(()=>generate(invalid),/PDFに使えない文字/);
  const none=JSON.parse(JSON.stringify(model));none.courses=[];await assert.rejects(()=>generate(none),/講座を選んで/);
  run('Object.assign(state,'+JSON.stringify(sample)+');renderProposal()');

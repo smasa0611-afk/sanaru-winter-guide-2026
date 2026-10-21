@@ -10,16 +10,16 @@ const ctx=vm.createContext({document,console,window:null,Intl,Date,Set,Number,St
 for(const script of document.querySelectorAll('script'))vm.runInContext(script.textContent,ctx);
 const run=s=>vm.runInContext(s,ctx);
 (async()=>{
-assert.equal(document.querySelectorAll('#results .card').length,5);
-assert.ok(document.querySelector('#diagnosis-lead').textContent.includes('課題'));
-run("state.grade='高1';state.case='ahead';state.coach.need='stretch';state.coach.readiness='unknown';renderResults()");
-assert.ok(document.querySelector('#results').textContent.includes('理解度の確認が先'));
-run("state.grade='中2';state.case='foundation';state.subject='理科';state.coach.need='blocked';renderResults()");
+assert.equal(document.querySelectorAll('#results .card').length,0);
+assert.ok(document.querySelector('#diagnosis-lead').textContent.includes('確認'));
+run("state.grade='高1';state.case='practice';state.subject='数学';subjectProfile().need='stretch';subjectProfile().readiness='unknown';renderResults()");
+assert.ok(document.querySelector('#results').textContent.includes('確認が必要'));
+run("state.grade='中2';state.case='foundation';state.subject='理科';subjectProfile().need='blocked';renderResults()");
 assert.equal(document.querySelectorAll('#results .card').length,1);
 assert.ok(document.querySelector('#results').textContent.includes('演習だけでは'));
 await run("addPlan(PLANS.find(p=>p.grade==='中2'&&p.subject==='理科'&&p.kind==='補強').id)");
 run("state.coach.capacity='8';state.fields.school='テスト校';renderProposal()");
-assert.ok(document.querySelector('#plan-review').textContent.includes('4回分'));
+assert.ok(document.querySelector('#plan-review').textContent.includes('4授業枠'));
 assert.ok(document.querySelector('#paper').textContent.includes('成果の確かめ方'));
 assert.ok(document.querySelector('#paper').textContent.includes('冬の学びの進め方'));
 assert.ok(!document.querySelector('#paper').textContent.includes('社員用'));

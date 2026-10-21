@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node verify.cjs && node verify-planning.cjs && node verify-dom.cjs && node verify-audit.cjs && node verify-curriculum.cjs && node verify-pdf.cjs"
+    "test": "node verify.cjs && node verify-planning.cjs && node verify-dom.cjs && node verify-audit.cjs && node verify-selection.cjs && node verify-curriculum.cjs && node verify-pdf.cjs"
   },
   "devDependencies": { "linkedom": "0.18.13" }
 }

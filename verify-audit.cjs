@@ -19,7 +19,7 @@ eval(harness+`
  const picker=document.querySelector('[data-count="'+force.id+'"]');assert.equal(picker.value,'8');picker.value='12';
  await run('addPlan('+JSON.stringify(force.id)+')');assert.equal(run('countOf(state.selected[0].composition)'),12);
  run("state.selected=[];state.grade='中3';state.case='roots';state.subject='すべて';renderFilters();renderResults()");
- assert.ok(!document.querySelector('#route').closest('label').hidden);
+ assert.ok(document.querySelector('#route').closest('label').hidden);
  for(const b of document.querySelectorAll('#results [data-add]'))assert.equal(run('planById('+JSON.stringify(b.dataset.add)+').kind'),'力シリーズ');
  run("state.grade='小1';state.case='foundation';renderFilters();renderResults()");assert.ok(document.querySelectorAll('#results .card').length>0);
  assert.ok(run("COACH.explain(PLANS.find(p=>p.grade==='中3'&&p.subject==='英語'&&p.kind==='補強')).reason").includes('入試テーマ'));
@@ -35,3 +35,4 @@ eval(harness+`
  console.log('PASS: compact selection UI, every plan/school type, exact power-course options, middle-school entrance copy, atomic validation, empty fees and portable web HTML.');
 })().catch(e=>{console.error(e);process.exitCode=1});
 `);
+

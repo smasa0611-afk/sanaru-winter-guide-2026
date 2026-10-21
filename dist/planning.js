@@ -40,8 +40,17 @@ const COACH={
   if(profile.prior)checks.push('既受講内容「'+profile.prior+'」と単元・教材の重複を照合。');
   if(!checks.length)checks.push('本人の答案・学校進度・開講日時を確認して最終決定。');
   let measure=s.measure;
+  if(p.subject==='英語'&&p.kind==='補強'&&p.grade!=='中3')measure='学習した単語を見ずに答え、間違えた語を次の回でもう一度確認する。';
+  if(p.grade==='中3'&&p.kind==='補強')reason='入試に向けて、'+p.subject+'の対象単元を学び、確認問題と解き直しで今優先する弱点を整えるためです。';
+  if(p.grade==='中3'&&p.kind==='補強'&&p.subject==='英語')reason='入試テーマと文法の弱点を確認し、理解を補う授業と演習を組み合わせて入試で使う基本を整えるためです。';
   if(p.subject==='国語'&&p.grade.startsWith('小'))measure=p.kind==='補強'?'毎回の漢字テストと再テストで、学習した漢字を書けるか確認する。':p.kind==='強化'?'主語・述語など、学習した知識問題を自力で解いて確認する。':s.measure;
-  return {reason,checks,fit,question:s.question,measure,home:s.home,lead:q.lead};
+  if(p.grade==='高2'&&p.subject==='数学'&&p.kind==='強化')reason='模試で分かった苦手単元を、理解度に合う映像と確認テストで学び直し、受験学年へ向けた土台を整えるためです。';
+  let home=s.home;
+  if(p.subject==='英語')home='「今日はどの単語・表現を覚えた？」と一つ聞いてみてください。学習の確認や解説は校舎で行います。';
+  if(['算数','数学','理科','社会'].includes(p.subject))home='「前よりできるようになったことは？」と短く聞き、取り組みをねぎらってください。難しい内容を教え直す必要はありません。';
+  if(p.subject==='国語')home=p.grade.startsWith('小')&&p.kind==='補強'?'覚えた漢字を一つ聞き、できたことを一緒に喜んでください。間違いの確認は授業で続けます。':'新しく知った言葉や分かったことを一つ聞いてみてください。短い会話で十分です。';
+  return {reason,checks,fit,question:s.question,measure,home,lead:q.lead};
  },
  load(selected,capacity,budget,extras){const counts=selected.map(x=>countOf(x.composition));const unknown=counts.some(x=>x===null),total=counts.reduce((a,b)=>a+(b||0),0);const hasCapacity=capacity!==''&&Number(capacity)>0;const feesKnown=selected.length>0&&selected.every(x=>validMoney(x.price))&&validMoney(extras);const amount=feesKnown?selected.reduce((a,x)=>a+Number(x.price),Number(extras)):null;return {total,unknown,over:hasCapacity&&total>Number(capacity),remaining:hasCapacity?Number(capacity)-total:null,feesKnown,amount,overBudget:feesKnown&&budget!==''&&Number(budget)>=0&&amount>Number(budget)};}
 };
+

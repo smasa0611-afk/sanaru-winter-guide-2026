@@ -6,8 +6,8 @@ const WINTER_MEANING={
   const format=[];
   if(/個別/.test(comp))format.push('個別指導では、解く過程を確認しながら疑問を整理します。説明を受けた後に、自分で解けるかを確かめます。');
   if(/映像/.test(comp))format.push('映像授業では、選んだ単元の考え方を学びます。視聴しただけで終えず、教材や確認問題で理解を確かめることを大切にします。');
-  if(/学トレ/.test(comp))format.push('AI学トレでは、問題を解いて結果を確かめ、誤った内容にもう一度取り組みます。「分かったつもり」を自力で使える知識に近づけます。');
-  if(/自立/.test(comp))format.push('自立学習では、課題の進め方と進捗を確認し、解き直しまで取り組みます。新学期にも続けられる勉強の手順を整えます。');
+  if(/学トレ/.test(comp))format.push('AI学トレでは、問題を解いて結果を確かめ、間違えた内容にもう一度取り組みます。');
+  if(/自立/.test(comp))format.push('自立学習では、計画と進み具合を確認し、解き直しまで取り組む習慣を育てます。');
   if(kind==='オリジナル'){
    headline='残りの時間を、今いちばん必要な学びに。';now='志望校や試験科目、現在の答案によって、冬に優先する課題は異なります。'+(grade==='高3'?'受験に向けて幅広く増やすだけでなく、得点につながる課題と解き直しの順番を整理する時期です。':'受験時期と出題内容を確かめ、取り組む範囲を絞った計画をつくることに意義があります。');approach=item.focus?'今回の重点は「'+item.focus+'」。担当者と決めた内容・回数に沿って取り組み、途中で理解を確認します。':'担当者との相談で、重点単元・授業形式・回数を決めます。確定後は、優先する課題から取り組み、途中で理解を確認する計画です。';after='できた問題と、引き続き確認が必要な問題を整理し、その後の受験準備につなげます。';
   }else if(kind==='力シリーズ'){
@@ -46,6 +46,7 @@ const WINTER_MEANING={
    [headline,now,after]=maps[sub];
   }
   if(!approach)approach=format.join('\n\n');
+  const scope=curriculumNote(p);if(scope)approach+='\n\n'+scope;
   return {headline,now,approach:approach||item.description,after};
  }
 };
@@ -54,3 +55,4 @@ document.querySelector('.preview-toolbar').after(meaningControls);
 const meaningRenderProposal=renderProposal;renderProposal=function(){meaningRenderProposal();$('include-meaning').checked=state.fields.includeMeaning!==false;document.querySelectorAll('#selected-edit .selected-item').forEach((el,i)=>{const x=state.selected[i],m=WINTER_MEANING.get(planById(x.id),x);el.insertAdjacentHTML('beforeend',`<details class="lesson-edit"><summary>保護者向け「冬に学ぶ意義」を調整</summary><p class="muted">初期案は選択講座に応じて変わります。空欄に戻すと初期案を使います。</p><label>なぜこの冬に取り組むか<textarea rows="4" maxlength="1200" data-edit="meaningNow" data-index="${i}" placeholder="${esc(m.now)}">${esc(x.meaningNow||'')}</textarea></label><label>次の学びへどうつなげるか<textarea rows="3" maxlength="1000" data-edit="meaningAfter" data-index="${i}" placeholder="${esc(m.after)}">${esc(x.meaningAfter||'')}</textarea></label></details>`);});};
 const meaningRenderPaper=renderPaper;renderPaper=function(){meaningRenderPaper();if(state.fields.includeMeaning===false||!state.selected.length)return;const pages=state.selected.map((x,i)=>{const p=planById(x.id),m=WINTER_MEANING.get(p,x);return `<section class="meaning-page" style="break-before:page;page-break-before:always;padding-top:24px"><div class="paper-top"><b>さなる個別@will</b><span>WINTER LEARNING GUIDE</span></div><p class="meaning-kicker">保護者の皆さまへ · ${esc(state.grade)} / ${esc(x.title)}</p><h1>この冬に、この学びを<br>選ぶ理由。</h1><h2 class="meaning-headline">${esc(m.headline)}</h2><p class="composition">今回のご提案：${esc(x.composition.replace(/\n/g,' '))}</p><div class="meaning-block" style="break-inside:avoid"><h3>01　なぜ、この冬に？</h3><p>${esc(x.meaningNow||m.now)}</p></div><div class="meaning-block" style="break-inside:avoid"><h3>02　この講座で、どう学ぶ？</h3><p>${esc(m.approach)}</p>${x.focus?'<p><b>今回、重点的に取り組むこと</b><br>'+esc(x.focus)+'</p>':''}</div><div class="meaning-block" style="break-inside:avoid"><h3>03　次の学びへ、どうつなげる？</h3><p>${esc(x.meaningAfter||m.after)}</p><p><b>この冬の成長の確かめ方</b><br>${esc(x.measure||x.goal)}</p></div><div class="meaning-home" style="break-inside:avoid"><b>ご家庭には、こんな応援を。</b><p>${esc(x.home||COACH.subject[p.subject]?.home||'取り組みの中でできるようになったことを、短い会話で聞いてみてください。')}</p></div><p class="paper-end">お子さまの理解度や学校の進度に合わせて、内容を調整します。<br>学習の意義・到達目標はご提案の考え方であり、特定の点数や合格を約束するものではありません。</p></section>`;}).join('');$('paper').insertAdjacentHTML('beforeend',pages);};
 $('include-meaning').addEventListener('change',()=>{state.fields.includeMeaning=$('include-meaning').checked;renderPaper();});
+

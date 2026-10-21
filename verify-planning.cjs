@@ -1,0 +1,16 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+const src=fs.readFileSync('dist/app.js','utf8');
+const ctx=vm.createContext({console});
+vm.runInContext(src.split(/\r?\n/).find(s=>s.startsWith('function countOf'))+'\n'+src.split(/\r?\n/).find(s=>s.startsWith('function validMoney'))+'\n'+fs.readFileSync('dist/planning.js','utf8'),ctx);
+const run=s=>vm.runInContext(s,ctx);
+assert.equal(run("COACH.explain({grade:'高1',subject:'数学',kind:'強化',composition:'映像8回'},{need:'stretch',readiness:'unknown'}).fit"),'理解度の確認が先');
+assert.equal(run("COACH.explain({grade:'高1',subject:'数学',kind:'強化',composition:'映像8回'},{need:'stretch',readiness:'ready'}).fit"),'優先候補');
+assert.ok(run("COACH.explain({grade:'小5',subject:'国語',kind:'強化',composition:'学トレ8回'},{need:'practice'}).checks.some(s=>s.includes('初見の長文'))"));
+assert.ok(run("COACH.explain({grade:'中3',subject:'社会',kind:'補強',composition:'映像12回＋自立8回'},{need:'practice',prior:'テーマ別Ⅰ'}).checks.some(s=>s.includes('重複'))"));
+assert.ok(run("COACH.explain({grade:'中1',subject:'数学',kind:'補強',composition:'自立8回'},{need:'blocked'}).checks.some(s=>s.includes('演習だけでは'))"));
+assert.equal(run("COACH.load([{composition:'映像8回＋自立8回',price:'10000'}],'12','9000','0').over"),true);
+assert.equal(run("COACH.load([{composition:'映像8回＋自立8回',price:'10000'}],'12','9000','0').overBudget"),true);
+assert.equal(run("COACH.load([{composition:'オリジナルプラン',price:''}],'12','9000','0').feesKnown"),false);
+assert.equal(run("COACH.load([{composition:'オリジナルプラン',price:''}],'12','9000','0').unknown"),true);
+assert.equal(run("COACH.load([{composition:'自立8回',price:'0'}],'8','0','0').amount"),0);
+console.log('PASS: prerequisites, subject-specific cautions, overlap checks, teaching support, capacity/budget limits, missing and zero prices.');

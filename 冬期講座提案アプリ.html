@@ -529,6 +529,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
   }result.push(line);}
   return result;
  }
+ const compact=model.courses.length===1;
  let page,y,title,kicker;const audit=[];
  function drawLine(t,x,top,size=10,font='sans',ink='ink'){
   page.drawText(t,{x,y:top-size,font:fonts[font],size,color:color(ink)});
@@ -536,18 +537,18 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
  }
  function raw(t,x,top,w,size=10,font='sans',ink='ink',leading=size*1.7){const ls=lines(t,w,size,font);ls.forEach((line,i)=>drawLine(line,x,top-i*leading,size,font,ink));return top-ls.length*leading;}
  function newPage(continuation=false){
-  page=doc.addPage([W,H]);page.drawImage(art,{x:36,y:620,width:523,height:181});
+  page=doc.addPage([W,H]);page.drawImage(art,{x:36,y:compact?680:620,width:523,height:compact?121:181});
   raw('さなる個別 @will',52,786,250,11,'bold','blue');raw('WINTER LEARNING 2026',355,786,190,8,'sans','blue');
-  const headerText=kicker+(continuation?' / 続き':'');const headerLines=lines(headerText,460,9);raw(headerLines[0]+(headerLines.length>1?'…':''),52,755,480,9,'sans','muted');raw(title,52,726,480,24,'serif','ink',37);y=600;
+  const headerText=kicker+(continuation?' / 続き':'');const headerLines=lines(headerText,460,9);raw(headerLines[0]+(headerLines.length>1?'…':''),52,755,480,9,'sans','muted');raw(title,52,compact?735:726,480,compact?20:24,'serif','ink',compact?28:37);y=compact?663:600;
  }
  function start(t,k){title=t;kicker=k;newPage();}
  function ensure(h){if(y-h<BOTTOM&&y<599)newPage(true);}
- function paragraph(t,{x=42,w=511,size=10,font='sans',ink='ink',gap=12}={}){
+ function paragraph(t,{x=42,w=511,size=10,font='sans',ink='ink',gap=compact?8:12}={}){
   const ls=lines(t,w,size,font),leading=size*1.7;
   if(ls.length*leading<500)ensure(ls.length*leading+gap);
   for(const line of ls){ensure(leading);drawLine(line,x,y,size,font,ink);y-=leading;}y-=gap;
  }
- function section(label,body){const n=lines(body,499).length;ensure(25+Math.min(n*17,90));paragraph(label,{x:48,w:499,size:11,font:'bold',ink:'coral',gap:6});paragraph(body,{x:48,w:499,gap:15});}
+ function section(label,body){const n=lines(body,499).length;ensure(25+Math.min(n*17,90));paragraph(label,{x:48,w:499,size:11,font:'bold',ink:'coral',gap:6});paragraph(body,{x:48,w:499,gap:compact?8:15});}
  function rounded(x,top,w,h){
   const r=10;page.drawRectangle({x:x+r,y:top-h,width:w-2*r,height:h,color:color('pale')});page.drawRectangle({x,y:top-h+r,width:w,height:h-2*r,color:color('pale')});
   for(const cx of [x+r,x+w-r])for(const cy of [top-r,top-h+r])page.drawCircle({x:cx,y:cy,size:r,color:color('pale')});
@@ -563,13 +564,13 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
   paragraph(String(i+1).padStart(2,'0')+'　'+x.title,{x:46,w:503,size:16,font:'serif',ink:'blue',gap:3});
   paragraph(x.composition.replace(/\n/g,' ')+' / '+grade,{x:46,w:503,size:9,ink:'muted',gap:6});
   if(x.description)paragraph(x.description,{x:46,w:503,size:9,ink:'muted',gap:7});
-  paragraph('おすすめする理由　'+x.reason,{x:46,w:503,gap:5});paragraph('冬の到達目標　'+x.goal,{x:46,w:503,gap:17});
+  paragraph('おすすめする理由　'+x.reason,{x:46,w:503,gap:5});if(!compact||!f.goal.includes(x.goal))paragraph('冬の到達目標　'+x.goal,{x:46,w:503,gap:17});
  });
- start('小さな一歩を、\n確かな手応えに。','冬期講座 ご提案書 / 学び方とご相談事項');
- courses.forEach((x,i)=>section(String(i+1).padStart(2,'0')+'　'+x.title+'：取り組みと確認','重点単元・課題：'+(x.focus||x.description)+'\n成果の確かめ方：'+(x.measure||x.goal)));
- section('冬の学びの進め方','はじめに：'+flow.phaseStart+'\n学習中：'+flow.phaseDuring+'\n終わりに：'+flow.phaseEnd);
- section('ご家庭へ',flow.homeMessage);
- panel('この冬の受講回数',model.countLabel,57);
+ if(!compact)start('小さな一歩を、\n確かな手応えに。','冬期講座 ご提案書 / 学び方とご相談事項');
+ courses.forEach((x,i)=>section(String(i+1).padStart(2,'0')+'　'+x.title+'：取り組みと確認',(compact?(x.focus?'重点単元・課題：'+x.focus+'\n':''):'重点単元・課題：'+(x.focus||x.description)+'\n')+'成果の確かめ方：'+(x.measure||x.goal)));
+ function learningFlow(){section('冬の学びの進め方','はじめに：'+flow.phaseStart+'\n学習中：'+flow.phaseDuring+'\n終わりに：'+flow.phaseEnd);section('ご家庭へ',flow.homeMessage);}
+ if(!compact||!model.includeMeaning)learningFlow();
+ if(compact)paragraph('受講回数：'+model.countLabel,{size:9,gap:8});else panel('この冬の受講回数',model.countLabel,57);
  paragraph([f.period&&'受講期間：'+f.period,f.deadline&&'ご相談・申込期限：'+f.deadline,f.notes,(f.school||'校舎名 未入力')+(f.teacher?'　担当：'+f.teacher:'')].filter(Boolean).join('\n'),{size:9,ink:'muted',gap:10});
  paragraph('開講日時・教材・受講条件は校舎と相談のうえ決定します。到達目標は学習の目安です。',{size:8,ink:'muted'});
  if(model.includeMeaning)for(const x of courses){const m=x.meaning;
@@ -580,6 +581,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
   section('02　この講座で、どう学ぶ？',m.approach+(x.focus?'\n今回の重点：'+x.focus:''));
   section('03　次の学びへ、どうつなげる？',(x.meaningAfter||m.after)+'\n成長の確かめ方：'+(x.measure||x.goal));
   panel('ご家庭には、こんな応援を。',x.home||'取り組みの中でできるようになったことを、短い会話で聞いてみてください。');
+  if(compact)learningFlow();
   paragraph('理解度や学校の進度に合わせて調整します。学習の意義・到達目標はご提案の考え方であり、特定の点数や合格を約束するものではありません。',{size:8,ink:'muted'});
  }
  const pages=doc.getPages();pages.forEach((p,i)=>{page=p;p.drawLine({start:{x:36,y:49},end:{x:559,y:49},thickness:.6,color:color('#d7e6f0')});raw('2026冬期講座 ご提案書・冬の学びガイド',36,39,450,8,'sans','muted');raw((i+1)+' / '+pages.length,510,39,49,8,'sans','muted');});
@@ -602,7 +604,7 @@ function parentPDFModel(){
 }
 const oldPrintPDF=$('print'),pdfButton=oldPrintPDF.cloneNode(true);oldPrintPDF.replaceWith(pdfButton);pdfButton.textContent='まとめてPDFを作成 ↓';
 const pdfStatus=document.createElement('p');pdfStatus.id='pdf-status';pdfStatus.className='muted';pdfStatus.setAttribute('role','status');pdfStatus.setAttribute('aria-live','polite');
-pdfStatus.textContent='サンプルと同じA4デザインで、提案書＋選択講座ごとの「この冬に学ぶ意義」を1つのPDFにします。文章が長い場合は続きのページを追加します。';
+pdfStatus.textContent='1講座なら提案書1枚＋「この冬に学ぶ意義」1枚の計2枚が基本です。複数講座や長文の場合は、内容を省略せず必要なページを追加します。';
 document.querySelector('.preview-column > .muted').replaceWith(pdfStatus);
 const pdfPreview=document.createElement('section');pdfPreview.id='pdf-preview';pdfPreview.hidden=true;pdfPreview.innerHTML='<div class="pdf-actions"><b id="pdf-summary"></b><a id="pdf-save" class="primary linkbutton">PDFを保存 ↓</a><a id="pdf-open" class="secondary linkbutton" target="_blank" rel="noopener">PDFを開く ↗</a><button id="pdf-close" class="textbtn" type="button">プレビューを閉じる</button></div><p class="muted">下のPDFが保存されます。入力を変更した場合は「まとめてPDFを作成」で作り直してください。表示できない端末では「PDFを保存」をご利用ください。</p><iframe title="作成した保護者向けPDF" id="pdf-frame"></iframe>';
 pdfStatus.after(pdfPreview);

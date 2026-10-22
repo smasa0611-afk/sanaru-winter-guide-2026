@@ -10,7 +10,7 @@ function parentPDFModel(){
 }
 const oldPrintPDF=$('print'),pdfButton=oldPrintPDF.cloneNode(true);oldPrintPDF.replaceWith(pdfButton);pdfButton.textContent='まとめてPDFを作成 ↓';
 const pdfStatus=document.createElement('p');pdfStatus.id='pdf-status';pdfStatus.className='muted';pdfStatus.setAttribute('role','status');pdfStatus.setAttribute('aria-live','polite');
-pdfStatus.textContent='1講座なら提案書1枚＋「この冬に学ぶ意義」1枚の計2枚が基本です。複数講座や長文の場合は、内容を省略せず必要なページを追加します。';
+pdfStatus.textContent='複数講座でも提案書1枚＋「この冬に学ぶ意義」1枚の計2枚にまとめます。PDFでは講座ごとの目標と学ぶ意義を要約し、元の詳しい文章は編集画面に保持します。';
 document.querySelector('.preview-column > .muted').replaceWith(pdfStatus);
 const pdfPreview=document.createElement('section');pdfPreview.id='pdf-preview';pdfPreview.hidden=true;pdfPreview.innerHTML='<div class="pdf-actions"><b id="pdf-summary"></b><a id="pdf-save" class="primary linkbutton">PDFを保存 ↓</a><a id="pdf-open" class="secondary linkbutton" target="_blank" rel="noopener">PDFを開く ↗</a><button id="pdf-close" class="textbtn" type="button">プレビューを閉じる</button></div><p class="muted">下のPDFが保存されます。入力を変更した場合は「まとめてPDFを作成」で作り直してください。表示できない端末では「PDFを保存」をご利用ください。</p><iframe title="作成した保護者向けPDF" id="pdf-frame"></iframe>';
 pdfStatus.after(pdfPreview);

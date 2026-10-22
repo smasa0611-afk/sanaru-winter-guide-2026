@@ -47,5 +47,5 @@ const easyProposal=renderProposal;renderProposal=function(){syncEasyProposal();e
   item.append(details);for(const el of [...labels,...extra])details.append(el);
  }
 };
-const easyPDF=parentPDFModel;parentPDFModel=function(){syncEasyProposal();const model=easyPDF();delete model.totalLabel;delete model.feeDetails;return model;};
+const easyPDF=parentPDFModel;parentPDFModel=function(){syncEasyProposal();const model=easyPDF();model.fields.goalMode=state.fields.goalMode;delete model.totalLabel;delete model.feeDetails;return model;};
 const easyStyle=document.createElement('style');easyStyle.textContent='.easy-proposal{border-top:1px solid #d6e4ee;padding:18px 0 6px;margin:14px 0}.easy-proposal h3{font-size:17px;margin:0 0 12px}.easy-preview{white-space:pre-wrap;background:#edf5fa;border-radius:12px;padding:14px;font-size:14px;line-height:1.9;color:#193e56}.easy-course-edit summary,.easy-proposal summary,.easy-optional summary{cursor:pointer;color:#275a78;font-size:14px}.easy-optional{padding:14px 0;margin-bottom:12px}.easy-proposal .check{font-weight:normal}.easy-proposal .muted{font-size:12px}.easy-proposal input[type=checkbox]{flex-shrink:0}.easy-proposal textarea{min-height:140px}';document.head.append(easyStyle);

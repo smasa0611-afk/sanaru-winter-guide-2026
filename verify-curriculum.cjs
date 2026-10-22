@@ -30,7 +30,7 @@ eval(harness+`
   if(grade==='高2')assert.ok(model.countLabel.startsWith('12授業枠'));
   const result=await run('WinterPDF.create(parentPDFModel())');
   const text=result.audit.map(a=>a.text).join('');
-  assert.ok(text.includes('なぜ、この冬に'));
+  assert.ok(text.includes('この冬に学ぶ意義'));
   for(const a of result.audit){assert.ok(a.bottom>=27);assert.ok(a.x+a.width<=570);assert.ok(a.top<=790);}
   fs.writeFileSync('output/pdf/再検証_'+grade+'_'+subject+'.pdf',result.bytes);
   console.log('PDF',grade,subject,result.pageCount,'pages');

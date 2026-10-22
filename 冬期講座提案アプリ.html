@@ -555,34 +555,63 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
  }
  function panel(label,body,minH=70){const ls=lines(body,495);const h=Math.max(minH,43+ls.length*17);if(h>500){section(label,body);return;}ensure(h+15);rounded(36,y,523,h);raw(label,50,y-10,495,10,'bold','blue');raw(body,50,y-31,495);y-=h+15;}
  const {fields:f,courses,grade,flow}=model;
- start('この冬の「できた」を、\n春の自信につなげよう。','冬期講座 ご提案書 / '+grade);
- paragraph((f.student?f.student+' 様':'お子さま')+'・保護者様へ',{font:'bold'});
- paragraph(f.message||'一人ひとりの今と、目指す姿に合わせて。この冬に取り組んでほしい学びをご提案します。',{gap:16});
- panel('この冬に取り組むこと',f.goal||'一つひとつ確かめながら、自分の力でできることを増やしていきましょう。',75);
- courses.forEach((x,i)=>{
-  const h=65+17*(lines('おすすめする理由　'+x.reason,503).length+lines('冬の到達目標　'+x.goal,503).length);ensure(Math.min(h,500));
-  paragraph(String(i+1).padStart(2,'0')+'　'+x.title,{x:46,w:503,size:16,font:'serif',ink:'blue',gap:3});
-  paragraph(x.composition.replace(/\n/g,' ')+' / '+grade,{x:46,w:503,size:9,ink:'muted',gap:6});
-  if(x.description)paragraph(x.description,{x:46,w:503,size:9,ink:'muted',gap:7});
-  paragraph('おすすめする理由　'+x.reason,{x:46,w:503,gap:5});if(!compact||!f.goal.includes(x.goal))paragraph('冬の到達目標　'+x.goal,{x:46,w:503,gap:17});
- });
- if(!compact)start('小さな一歩を、\n確かな手応えに。','冬期講座 ご提案書 / 学び方とご相談事項');
- courses.forEach((x,i)=>section(String(i+1).padStart(2,'0')+'　'+x.title+'：取り組みと確認',(compact?(x.focus?'重点単元・課題：'+x.focus+'\n':''):'重点単元・課題：'+(x.focus||x.description)+'\n')+'成果の確かめ方：'+(x.measure||x.goal)));
- function learningFlow(){section('冬の学びの進め方','はじめに：'+flow.phaseStart+'\n学習中：'+flow.phaseDuring+'\n終わりに：'+flow.phaseEnd);section('ご家庭へ',flow.homeMessage);}
- if(!compact||!model.includeMeaning)learningFlow();
- if(compact)paragraph('受講回数：'+model.countLabel,{size:9,gap:8});else panel('この冬の受講回数',model.countLabel,57);
- paragraph([f.period&&'受講期間：'+f.period,f.deadline&&'ご相談・申込期限：'+f.deadline,f.notes,(f.school||'校舎名 未入力')+(f.teacher?'　担当：'+f.teacher:'')].filter(Boolean).join('\n'),{size:9,ink:'muted',gap:10});
- paragraph('開講日時・教材・受講条件は校舎と相談のうえ決定します。到達目標は学習の目安です。',{size:8,ink:'muted'});
- if(model.includeMeaning)for(const x of courses){const m=x.meaning;
-  start('この冬に、この学びを\n選ぶ理由。','保護者の皆さまへ / '+grade+' / '+x.title);
-  if(lines(kicker,460,9).length>1)paragraph(x.title,{size:12,font:'bold',ink:'blue'});
-  paragraph(m.headline,{size:20,font:'serif',ink:'blue',gap:12});paragraph('今回のご提案：'+x.composition.replace(/\n/g,' '),{size:9,ink:'muted',gap:20});
-  section('01　なぜ、この冬に？',x.meaningNow||m.now);
-  section('02　この講座で、どう学ぶ？',m.approach+(x.focus?'\n今回の重点：'+x.focus:''));
-  section('03　次の学びへ、どうつなげる？',(x.meaningAfter||m.after)+'\n成長の確かめ方：'+(x.measure||x.goal));
-  panel('ご家庭には、こんな応援を。',x.home||'取り組みの中でできるようになったことを、短い会話で聞いてみてください。');
-  if(compact)learningFlow();
-  paragraph('理解度や学校の進度に合わせて調整します。学習の意義・到達目標はご提案の考え方であり、特定の点数や合格を約束するものではありません。',{size:8,ink:'muted'});
+ if(courses.length>10)throw Error('読みやすい2枚にまとめられるのは10講座までです。講座を絞ってください。');
+ // Keep font sizes fixed. Allocate space by course count, then select key sentences.
+ function brief(text,maxLines,w,size=10.5){
+  const value=clean(text).trim();let out=lines(value,w,size);
+  if(out.length<=maxLines)return out;
+  const sentences=value.match(/[^。！？\n]+[。！？]?/g)||[value];let chosen='';
+  for(const sentence of sentences){if(lines(chosen+sentence,w,size).length>maxLines)break;chosen+=sentence;}
+  if(chosen)return lines(chosen,w,size);
+  out=out.slice(0,maxLines);let tail=out[out.length-1];while(fonts.sans.widthOfTextAtSize(tail+'…',size)>w)tail=tail.slice(0,-1);out[out.length-1]=tail+'…';return out;
+ }
+ function block(text,x,top,w,maxLines,size=10.5,font='sans',ink='ink'){
+  const out=brief(text,maxLines,w,size);out.forEach((line,i)=>drawLine(line,x,top-i*15,size,font,ink));return top-out.length*15;
+ }
+ function header(title,sub){
+  page=doc.addPage([W,H]);page.drawImage(art,{x:36,y:701,width:523,height:100});
+  raw('さなる個別 @will',50,787,260,11,'bold','blue');raw('WINTER LEARNING 2026',362,787,180,8,'sans','blue');
+  raw(title,50,757,490,22,'serif','ink',30);raw(sub,50,718,490,9,'sans','muted');
+ }
+ const columns=courses.length<=3?1:2,rows=Math.ceil(courses.length/columns),gap=12,cardW=(523-gap*(columns-1))/columns;
+ const cardTop=600,cardBottom=159,cardH=(cardTop-cardBottom-gap*(rows-1))/rows;
+ function cards(kind){courses.forEach((x,i)=>{
+  const col=i%columns,row=Math.floor(i/columns),left=36+col*(cardW+gap),top=cardTop-row*(cardH+gap),width=cardW-24;
+  rounded(left,top,cardW,cardH);let pos=top-10;
+  pos=block(String(i+1).padStart(2,'0')+'  '+x.title,left+12,pos,width,1,12,'bold','blue')-5;
+  if(kind==='proposal'){
+   // Formats/counts are never summarized; every source unit remains visible.
+   const compLines=lines(x.composition.replace(/\n/g,' '),width,10.5);
+   compLines.forEach((line,j)=>drawLine(line,left+12,pos-j*15,10.5,'sans','muted'));pos-=compLines.length*15+7;
+   const remaining=Math.max(1,Math.floor((pos-(top-cardH+8))/15));
+   if(pos<top-cardH+23)throw Error('授業構成の文章が長すぎます。形式と回数を簡潔に整えてください。');
+   if(remaining>=5){pos=block('取り組み：'+x.description,left+12,pos,width,2)-3;}
+   block((x.focus?'重点：'+x.focus+'。':'')+'目標：'+x.goal,left+12,pos,width,remaining>=5?remaining-3:remaining);
+  }else{
+   const remaining=Math.max(2,Math.floor((pos-(top-cardH+8))/15));
+   const why=x.meaningNow||x.meaning.now;
+   const whyLines=remaining>=7?Math.ceil(remaining*.55):remaining;
+   pos=block('この冬に：'+why,left+12,pos,width,whyLines);
+   if(remaining>=7)block('次の学びへ：'+(x.meaningAfter||x.meaning.after),left+12,pos-5,width,remaining-whyLines-1);
+  }
+ });}
+ header('この冬の学びをご提案します',grade+' / '+courses.length+'講座');
+ block((f.student?f.student+' 様':'お子さま')+'・保護者様へ',42,682,511,1,11,'bold');
+ block(f.message||'この冬の学びを通して、一つひとつ「できた」を増やしていきましょう。',42,657,511,f.goalMode==='custom'?2:3);
+ if(f.goalMode==='custom'&&f.goal)block('この冬の目標：'+f.goal,42,625,511,1);
+ cards('proposal');
+ block('受講回数：'+model.countLabel,42,144,511,2,10);
+ const contact=[f.period&&'受講期間：'+f.period,f.deadline&&'相談期限：'+f.deadline,(f.school||'校舎名 未入力')+(f.teacher?' ／ 担当：'+f.teacher:'')].filter(Boolean).join(' ／ ');
+ block(contact,42,107,511,2,9);
+ block('受講内容・日程は校舎と相談して決定します。'+(f.notes||''),42,76,511,1,8);
+ if(model.includeMeaning){
+  header('この冬に学ぶ意義',grade+' / ご家庭と共有したいこと');
+  block('いまの課題を確かめ、選んだ講座で練習し、次の学びへつなげる冬に。',42,680,511,2,12,'bold','blue');
+  block('講座ごとの「なぜ今取り組むか」をまとめました。',42,642,511,2);
+  cards('meaning');
+  block('ご家庭での応援',42,145,511,1,11,'bold','blue');
+  block(flow.homeMessage||'できたことや工夫したことを聞き、日々の取り組みをねぎらってください。',42,123,511,2);
+  block('内容は2枚で読みやすくするため要点を整理しています。到達目標は学習の目安です。',42,78,511,1,8);
  }
  const pages=doc.getPages();pages.forEach((p,i)=>{page=p;p.drawLine({start:{x:36,y:49},end:{x:559,y:49},thickness:.6,color:color('#d7e6f0')});raw('2026冬期講座 ご提案書・冬の学びガイド',36,39,450,8,'sans','muted');raw((i+1)+' / '+pages.length,510,39,49,8,'sans','muted');});
  if(missing.size)throw Error('PDFに使えない文字があります：'+[...missing].join(' ')+'。別の表記に変更してください。');
@@ -604,7 +633,7 @@ function parentPDFModel(){
 }
 const oldPrintPDF=$('print'),pdfButton=oldPrintPDF.cloneNode(true);oldPrintPDF.replaceWith(pdfButton);pdfButton.textContent='まとめてPDFを作成 ↓';
 const pdfStatus=document.createElement('p');pdfStatus.id='pdf-status';pdfStatus.className='muted';pdfStatus.setAttribute('role','status');pdfStatus.setAttribute('aria-live','polite');
-pdfStatus.textContent='1講座なら提案書1枚＋「この冬に学ぶ意義」1枚の計2枚が基本です。複数講座や長文の場合は、内容を省略せず必要なページを追加します。';
+pdfStatus.textContent='複数講座でも提案書1枚＋「この冬に学ぶ意義」1枚の計2枚にまとめます。PDFでは講座ごとの目標と学ぶ意義を要約し、元の詳しい文章は編集画面に保持します。';
 document.querySelector('.preview-column > .muted').replaceWith(pdfStatus);
 const pdfPreview=document.createElement('section');pdfPreview.id='pdf-preview';pdfPreview.hidden=true;pdfPreview.innerHTML='<div class="pdf-actions"><b id="pdf-summary"></b><a id="pdf-save" class="primary linkbutton">PDFを保存 ↓</a><a id="pdf-open" class="secondary linkbutton" target="_blank" rel="noopener">PDFを開く ↗</a><button id="pdf-close" class="textbtn" type="button">プレビューを閉じる</button></div><p class="muted">下のPDFが保存されます。入力を変更した場合は「まとめてPDFを作成」で作り直してください。表示できない端末では「PDFを保存」をご利用ください。</p><iframe title="作成した保護者向けPDF" id="pdf-frame"></iframe>';
 pdfStatus.after(pdfPreview);
@@ -812,6 +841,6 @@ const easyProposal=renderProposal;renderProposal=function(){syncEasyProposal();e
   item.append(details);for(const el of [...labels,...extra])details.append(el);
  }
 };
-const easyPDF=parentPDFModel;parentPDFModel=function(){syncEasyProposal();const model=easyPDF();delete model.totalLabel;delete model.feeDetails;return model;};
+const easyPDF=parentPDFModel;parentPDFModel=function(){syncEasyProposal();const model=easyPDF();model.fields.goalMode=state.fields.goalMode;delete model.totalLabel;delete model.feeDetails;return model;};
 const easyStyle=document.createElement('style');easyStyle.textContent='.easy-proposal{border-top:1px solid #d6e4ee;padding:18px 0 6px;margin:14px 0}.easy-proposal h3{font-size:17px;margin:0 0 12px}.easy-preview{white-space:pre-wrap;background:#edf5fa;border-radius:12px;padding:14px;font-size:14px;line-height:1.9;color:#193e56}.easy-course-edit summary,.easy-proposal summary,.easy-optional summary{cursor:pointer;color:#275a78;font-size:14px}.easy-optional{padding:14px 0;margin-bottom:12px}.easy-proposal .check{font-weight:normal}.easy-proposal .muted{font-size:12px}.easy-proposal input[type=checkbox]{flex-shrink:0}.easy-proposal textarea{min-height:140px}';document.head.append(easyStyle);
 </script></body></html>

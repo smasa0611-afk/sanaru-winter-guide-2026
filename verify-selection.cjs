@@ -24,7 +24,7 @@ eval(harness+`
  for(const [subject,kind] of [['英語','補強'],['数学','強化'],['理科','補強']]){select('中2',subject,kind==='強化'?'practice':'foundation');await run('addPlan('+JSON.stringify(getId('中2',subject,kind))+')');}
  assert.equal(run('lessonCountLabel()'),'28授業枠');assert.ok(run('state.selected[1].composition').includes('8コマ'));assert.ok(run('state.selected[2].composition').includes('12回'));
  run('state.coach.evidence="PRIVATE_MEMO";state.selected[0].price="0";state.extras="0";renderProposal()');
- assert.equal(run('parentPDFModel().totalLabel'),'確認中');assert.ok(!run('JSON.stringify(parentPDFModel())').includes('PRIVATE_MEMO'));
+ assert.equal(run('parentPDFModel().totalLabel'),undefined);assert.ok(!run('JSON.stringify(parentPDFModel())').includes('PRIVATE_MEMO'));
  assert.ok(!document.querySelector('#paper').textContent.includes('PRIVATE_MEMO'));
  const saved=run('JSON.stringify(state)');ctx.saved=JSON.parse(saved);run('applyPlanState(validatedPlanState(saved))');
  assert.equal(run('state.selected.length'),3);assert.equal(run('state.selected[0].price'),'0');

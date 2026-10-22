@@ -74,7 +74,7 @@ $('grade').addEventListener('change',async()=>{if((state.selected.length||Object
 $('schoolType').addEventListener('change',()=>changeSchoolType($('schoolType').value));
 $('route').addEventListener('change',()=>{state.route=$('route').value;renderResults()});$('search').addEventListener('input',renderResults);
 $('results').addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(b)addPlan(b.dataset.add)});
-fieldIds.forEach(id=>$(id).addEventListener('input',()=>{state.fields[id]=$(id).value;renderPaper()}));
+fieldIds.forEach(id=>$(id).addEventListener('input',()=>{if(id==='goal')state.fields.goalMode='custom';if(id==='message')state.fields.messageChoice='custom';state.fields[id]=$(id).value;renderPaper()}));
 $('selected-edit').addEventListener('input',e=>{const el=e.target;if(!el.dataset.edit)return;const x=state.selected[Number(el.dataset.index)];x[el.dataset.edit]=el.value;if(el.dataset.edit==='composition')resetChecks(x.id);if(['reason','focus'].includes(el.dataset.edit))subjectProfile(planById(x.id).subject)[el.dataset.edit]=el.value;if(el.dataset.edit==='price'||el.dataset.edit==='composition'){state.verified=false;$('verified').checked=false}renderPaper()});
 $('selected-edit').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(b){state.selected.splice(Number(b.dataset.remove),1);state.verified=false;updateCount();renderProposal();renderResults()}});
 $('extras').addEventListener('input',()=>{state.extras=$('extras').value;state.verified=false;$('verified').checked=false;renderPaper()});$('verified').addEventListener('change',()=>{state.verified=$('verified').checked;renderPaper()});

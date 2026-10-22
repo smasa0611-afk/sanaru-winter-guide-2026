@@ -75,7 +75,7 @@ function confirmationMarkup(x){
 }
 renderReview=function(){
  const load=reviewData();const pending=pendingCourses();
- $('plan-review').innerHTML=`<div><p class="eyebrow">社員向け・渡す前の確認</p><h2>${state.selected.length}講座 ／ ${esc(lessonCountLabel())}</h2><p>1回・1コマを集計上1授業枠として合算。通塾日数・時間数ではありません。</p>${load.over?'<p>受講可能回数を'+(load.total-Number(state.coach.capacity))+'授業枠超えています。組み合わせを見直してください。</p>':''}${load.overBudget?'<p>入力料金が予算を'+money(load.amount-Number(state.coach.budget))+'超えています。</p>':''}<p>${load.feesKnown?'金額入力済み':'料金・教材費は確認中'}／${pending.length?pending.length+'講座に未確認・相談事項があります':'選択講座の確認項目は入力済み'}</p></div><div class="staff-registration"><h3>教材・単元・レベル・回数の確認一覧（社員用）</h3>${state.selected.map(confirmationMarkup).join('')}</div>`;
+ $('plan-review').innerHTML=`<div><p class="eyebrow">社員向け・渡す前の確認</p><h2>${state.selected.length}講座 ／ ${esc(lessonCountLabel())}</h2><p>1回・1コマを集計上1授業枠として合算。通塾日数・時間数ではありません。</p>${load.over?'<p>受講可能回数を'+(load.total-Number(state.coach.capacity))+'授業枠超えています。組み合わせを見直してください。</p>':''}<p>${pending.length?pending.length+'講座に未確認・相談事項があります':'選択講座の確認項目は入力済み'}</p></div><div class="staff-registration"><h3>教材・単元・レベル・回数の確認一覧（社員用）</h3>${state.selected.map(confirmationMarkup).join('')}</div>`;
 };
 $('plan-review').addEventListener('change',e=>{
  const el=e.target,id=el.dataset.checkId;if(!id)return;const c=courseConfirmation(id);

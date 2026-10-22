@@ -19,6 +19,8 @@ function validatedPlanState(s){
  for(const key of ['student','school','teacher','goal','message','period','deadline','notes','phaseStart','phaseDuring','phaseEnd','homeMessage'])result.fields[key]=str(s.fields[key]);
  if(s.fields.includeMeaning!==undefined&&typeof s.fields.includeMeaning!=='boolean')throw Error('添付設定が不正です');
  result.fields.includeMeaning=s.fields.includeMeaning!==false;
+ result.fields.goalMode=choice(s.fields.goalMode,['auto','custom'],s.fields.goal?'custom':'auto');
+ result.fields.messageChoice=choice(s.fields.messageChoice,['together','basics','practice','next','confidence','custom'],s.fields.message?'custom':'together');
  const c=s.coach===undefined?{}:s.coach;if(!object(c))throw Error('面談情報が不正です');
  result.coach={need:choice(c.need,Object.keys(COACH.profiles),'habit'),readiness:choice(c.readiness,['unknown','support','ready'],'unknown')};
  for(const key of ['prior','evidence'])result.coach[key]=str(c[key]);

@@ -23,7 +23,7 @@ eval(harness+`
   run('state.fields={student:"見本（架空の生徒）",school:"サンプル校",teacher:"担当者",message:"ご本人の希望を伺い、今回の学習内容と目標を一緒に決めるためのご提案です。",goal:"選んだ内容に取り組み、できたことと続ける課題を確認します。",period:"冬休み（日程は相談）"};state.coach.evidence="PRIVATE_EMPLOYEE_NOTE";renderProposal()');
   const model=run('parentPDFModel()');
   assert.ok(!JSON.stringify(model).includes('PRIVATE_EMPLOYEE_NOTE'));
-  assert.equal(model.totalLabel,'確認中');
+  assert.equal(model.totalLabel,undefined);
   if(grade==='中2')assert.ok(model.countLabel.startsWith('12授業枠'));
   if(grade==='小2')assert.ok(model.countLabel.startsWith('8授業枠'));
   if(grade==='中3')assert.ok(model.countLabel.startsWith('20授業枠'));

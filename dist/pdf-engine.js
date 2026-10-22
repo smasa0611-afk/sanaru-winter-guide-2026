@@ -57,7 +57,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
  start('この冬の「できた」を、\n春の自信につなげよう。','冬期講座 ご提案書 / '+grade);
  paragraph((f.student?f.student+' 様':'お子さま')+'・保護者様へ',{font:'bold'});
  paragraph(f.message||'一人ひとりの今と、目指す姿に合わせて。この冬に取り組んでほしい学びをご提案します。',{gap:16});
- panel('この冬に目指すこと',f.goal||'一つひとつ確かめながら、自分の力でできることを増やしていきましょう。',75);
+ panel('この冬に取り組むこと',f.goal||'一つひとつ確かめながら、自分の力でできることを増やしていきましょう。',75);
  courses.forEach((x,i)=>{
   const h=65+17*(lines('おすすめする理由　'+x.reason,503).length+lines('冬の到達目標　'+x.goal,503).length);ensure(Math.min(h,500));
   paragraph(String(i+1).padStart(2,'0')+'　'+x.title,{x:46,w:503,size:16,font:'serif',ink:'blue',gap:3});
@@ -69,7 +69,7 @@ async function create(model,assets=root.WINTER_PDF_ASSETS){
  courses.forEach((x,i)=>section(String(i+1).padStart(2,'0')+'　'+x.title+'：取り組みと確認','重点単元・課題：'+(x.focus||x.description)+'\n成果の確かめ方：'+(x.measure||x.goal)));
  section('冬の学びの進め方','はじめに：'+flow.phaseStart+'\n学習中：'+flow.phaseDuring+'\n終わりに：'+flow.phaseEnd);
  section('ご家庭へ',flow.homeMessage);
- panel('受講回数 '+model.countLabel+' ／ ご提案総額（税込） '+model.totalLabel,model.feeDetails,57);
+ panel('この冬の受講回数',model.countLabel,57);
  paragraph([f.period&&'受講期間：'+f.period,f.deadline&&'ご相談・申込期限：'+f.deadline,f.notes,(f.school||'校舎名 未入力')+(f.teacher?'　担当：'+f.teacher:'')].filter(Boolean).join('\n'),{size:9,ink:'muted',gap:10});
  paragraph('開講日時・教材・受講条件は校舎と相談のうえ決定します。到達目標は学習の目安です。',{size:8,ink:'muted'});
  if(model.includeMeaning)for(const x of courses){const m=x.meaning;

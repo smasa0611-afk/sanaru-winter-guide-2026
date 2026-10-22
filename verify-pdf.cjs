@@ -15,14 +15,14 @@ eval(harness+`
  assert.ok(result.audit.some(x=>x.page===4&&x.text.includes('書ける漢字')));
  const content=result.audit.map(x=>x.text).join('');assert.ok(content.includes('確認中'));assert.ok(content.includes('サンプル校'));
  function bounds(r){for(const a of r.audit){assert.ok(a.bottom>=27,'footer/content beyond page');assert.ok(a.x+a.width<=570,'text extends beyond page');assert.ok(a.top<=790);}}
- bounds(result);
+ bounds(result);assert.ok(!content.includes('ご提案総額'));assert.ok(!content.includes('教材費・その他'));
  const noMeaning=JSON.parse(JSON.stringify(model));noMeaning.includeMeaning=false;
  assert.equal((await generate(noMeaning)).pageCount,2);
  const long=JSON.parse(JSON.stringify(model));long.fields.message='丁寧に振り返りながら学びます。'.repeat(95)+'【末尾メッセージ】';long.courses[0].meaningNow='学習の意義を確認します。'.repeat(120)+'【末尾意義】';long.courses=Array.from({length:5},(_,i)=>({...long.courses[i%2],title:'講座'+i}));
  const overflow=await generate(long);bounds(overflow);assert.ok(overflow.pageCount>7);const all=overflow.audit.map(x=>x.text).join('');assert.ok(all.includes('【末尾メッセージ】'));assert.ok(all.includes('【末尾意義】'));
  fs.writeFileSync('output/pdf/検証用_長文複数講座.pdf',overflow.bytes);
  run("state.selected.forEach(x=>x.price='12000');state.extras='1000';state.verified=true;state.coach.evidence='非公開社員メモ';state.selected[0].meaningNow='個別編集した冬の理由'");
- run('for(const x of state.selected){const c=courseConfirmation(x.id);for(const [k] of confirmationSpec(planById(x.id)).checks)c.statuses[k]="done"}');const priced=run('parentPDFModel()');assert.ok(priced.totalLabel.includes('25,000'));assert.ok(!JSON.stringify(priced).includes('非公開社員メモ'));assert.equal(priced.courses[0].meaningNow,'個別編集した冬の理由');
+ run('for(const x of state.selected){const c=courseConfirmation(x.id);for(const [k] of confirmationSpec(planById(x.id)).checks)c.statuses[k]="done"}');const priced=run('parentPDFModel()');assert.equal(priced.totalLabel,undefined);assert.ok(!JSON.stringify(priced).includes('非公開社員メモ'));assert.equal(priced.courses[0].meaningNow,'個別編集した冬の理由');
  const invalid=JSON.parse(JSON.stringify(model));invalid.fields.student='未対応🦄';await assert.rejects(()=>generate(invalid),/PDFに使えない文字/);
  const none=JSON.parse(JSON.stringify(model));none.courses=[];await assert.rejects(()=>generate(none),/講座を選んで/);
  run('Object.assign(state,'+JSON.stringify(sample)+');renderProposal()');

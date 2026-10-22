@@ -31,8 +31,8 @@ run("state.fields.includeMeaning=true;state.selected[0].meaningNow='この生徒
 for(const p of run('PLANS')){const m=run(`WINTER_MEANING.get(planById(${JSON.stringify(p.id)}),{composition:${JSON.stringify(p.composition)},description:'オリジナルの説明'})`);for(const k of ['headline','now','approach','after'])assert.ok(typeof m[k]==='string'&&m[k].length>5,p.id+' '+k);}
 assert.notEqual(run("WINTER_MEANING.get(PLANS.find(p=>p.grade==='小5'&&p.subject==='国語'&&p.kind==='補強'),{composition:'自立8回'}).now"),run("WINTER_MEANING.get(PLANS.find(p=>p.grade==='小5'&&p.subject==='国語'&&p.kind==='強化'),{composition:'学トレ8回'}).now"));
 run("state.selected[0].price='12000';state.extras='1000';state.verified=true;state.coach.budget='10000';renderPaper()");
-assert.ok(document.querySelector('#paper').textContent.includes('¥13,000'));
-assert.ok(document.querySelector('#plan-review').textContent.includes('¥3,000'));
+assert.ok(!document.querySelector('#paper').textContent.includes('¥13,000'));
+assert.ok(!document.querySelector('#plan-review').textContent.includes('¥3,000'));
 run("state.selected[0].measure='<img onerror=x>';renderPaper()");
 assert.ok(!document.querySelector('#paper img'));
 document.querySelector('#save').click();assert.equal(storage.size,1);

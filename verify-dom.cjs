@@ -35,7 +35,7 @@ assert.ok(!document.querySelector('#paper').textContent.includes('¥13,000'));
 assert.ok(!document.querySelector('#plan-review').textContent.includes('¥3,000'));
 run("state.selected[0].measure='<img onerror=x>';renderPaper()");
 assert.ok(!document.querySelector('#paper img'));
-document.querySelector('#save').click();assert.equal(storage.size,1);
+document.querySelector('#save').click();assert.ok(storage.has('sanaru-winter-2026-v1'));
 run("state.selected=[];state.fields={}");document.querySelector('#restore').click();
 assert.ok(document.querySelector('#paper').textContent.includes('テスト校'));
 run("state.showAll=true;renderResults()");assert.equal(document.querySelectorAll('#results .card').length,2);

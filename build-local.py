@@ -7,6 +7,8 @@ for name in ['style','winter','diagnosis']:
  if name=='winter':
   image=base64.b64encode((p/'dist/assets/winter-landscape.png').read_bytes()).decode('ascii')
   css=css.replace('assets/winter-landscape.png','data:image/png;base64,'+image)
+ for asset in ['winter-village-v2','winter-friends-v2']:
+  css=css.replace('assets/'+asset+'.png','data:image/png;base64,'+base64.b64encode((p/f'dist/assets/{asset}.png').read_bytes()).decode('ascii'))
  s=s.replace(f'<link rel="stylesheet" href="{name}.css">','<style>'+css+'</style>')
 names=['data','app','planning','selection-model','state-io','coach','meaning','winter-ui','parent-doc','vendor/pdf-lib.min','vendor/fontkit.min','pdf-assets','pdf-engine','pdf-ui','simple-ui','proposal-easy','booking-config','diagnosis']
 scripts='\n'.join((p/f'dist/{name}.js').read_text(encoding='utf-8').replace('</script','<\\/script') for name in names)
